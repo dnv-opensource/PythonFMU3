@@ -52,7 +52,6 @@ self.register_variable(
 ```python
 from pythonfmu3 import Fmi3Causality, Fmi3Slave, Float64
 
-
 class PIDController(Fmi3Slave):
     """PID Controller implementation"""
 
@@ -67,12 +66,12 @@ class PIDController(Fmi3Slave):
         self.measurement = 0.0
 
         # Outputs
-        self.control_output = 0.0
+        self.output = 0.0
 
         # Parameters
         self.kp = 1.0  # Proportional gain
         self.ki = 0.1  # Integral gain
-        self.kd = 0.01  # Derivative gain
+        self.kd = 0.01 # Derivative gain
 
         # Internal states
         self.integral_error = 0.0
@@ -80,22 +79,13 @@ class PIDController(Fmi3Slave):
         self.first_step = True
 
         # Register variables
-        self.register_variable(
-            Float64("setpoint", causality=Fmi3Causality.input, start=0.0)
-        )
-        self.register_variable(
-            Float64("measurement", causality=Fmi3Causality.input, start=0.0)
-        )
+        self.register_variable(Float64("time", causality=Fmi3Causality.independent))
+        self.register_variable(Float64("setpoint", causality=Fmi3Causality.input, start=0.0))
+        self.register_variable(Float64("measurement", causality=Fmi3Causality.input, start=0.0))
         self.register_variable(Float64("output", causality=Fmi3Causality.output))
-        self.register_variable(
-            Float64("Kp", causality=Fmi3Causality.parameter, start=1.0)
-        )
-        self.register_variable(
-            Float64("Ki", causality=Fmi3Causality.parameter, start=0.1)
-        )
-        self.register_variable(
-            Float64("Kd", causality=Fmi3Causality.parameter, start=0.01)
-        )
+        self.register_variable(Float64("kp", causality=Fmi3Causality.parameter, start=1.0))
+        self.register_variable(Float64("ki", causality=Fmi3Causality.parameter, start=0.1))
+        self.register_variable(Float64("kd", causality=Fmi3Causality.parameter, start=0.01))
 
     def do_step(self, current_time, step_size):
         # Calculate error
@@ -116,7 +106,7 @@ class PIDController(Fmi3Slave):
             d_term = self.kd * (error - self.previous_error) / step_size
 
         # PID output
-        self.control_output = p_term + i_term + d_term
+        self.output = p_term + i_term + d_term
 
         # Store error for next iteration
         self.previous_error = error
