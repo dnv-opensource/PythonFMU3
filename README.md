@@ -94,12 +94,10 @@ optional arguments:
 #### Write the script
 
 ```python
-
 from pythonfmu3 import Fmi3Causality, Fmi3Slave, Boolean, Int32, Float64, String
 
 
 class PythonSlave(Fmi3Slave):
-
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -114,16 +112,17 @@ class PythonSlave(Fmi3Slave):
         self.register_variable(Float64("time", causality=Fmi3Causality.independent))
         self.register_variable(Int32("intOut", causality=Fmi3Causality.output))
         self.register_variable(Float64("realOut", causality=Fmi3Causality.output))
-        self.register_variable(Boolean("booleanVariable", causality=Fmi3Causality.local))
+        self.register_variable(
+            Boolean("booleanVariable", causality=Fmi3Causality.local)
+        )
         self.register_variable(String("stringVariable", causality=Fmi3Causality.local))
-        
+
         # Note:
         # it is also possible to explicitly define getters and setters as lambdas in case the variable is not backed by a Python field.
         # self.register_variable(Float64("myReal", causality=Fmi3Causality.output, getter=lambda: self.realOut, setter=lambda v: set_real_out(v))
 
     def do_step(self, current_time, step_size):
         return True
-
 ```
 
 #### Create the FMU
@@ -144,13 +143,11 @@ To create a model exchange FMU you must inherit from `Fmi3SlaveBase` and one of 
 #### Write the script
 
 ```python
-
 from pythonfmu3 import Fmi3Causality, Fmi3SlaveBase, Float64, ModelExchange
 from typing import List
 
 
 class PythonSlaveMX(Fmi3SlaveBase, ModelExchange):
-
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -164,20 +161,59 @@ class PythonSlaveMX(Fmi3SlaveBase, ModelExchange):
         self.derx0 = 0.0
         self.derx1 = 0.0
 
-        self.register_variable(Float64("time", causality=Fmi3Causality.independent, variability=Fmi3Variability.continuous))
-        self.register_variable(Float64("x0", causality=Fmi3Causality.output, start=2, variability=Fmi3Variability.continuous, initial=Fmi3Initial.exact))
-        self.register_variable(Float64("x1", causality=Fmi3Causality.output, start=0, variability=Fmi3Variability.continuous, initial=Fmi3Initial.exact))
-        self.register_variable(Float64("derx0", causality=Fmi3Causality.local, variability=Fmi3Variability.continuous, derivative=1))
-        self.register_variable(Float64("derx1", causality=Fmi3Causality.local, variability=Fmi3Variability.continuous, derivative=2))
-        self.register_variable(Float64("mu", causality=Fmi3Causality.parameter, variability=Fmi3Variability.fixed))
-
+        self.register_variable(
+            Float64(
+                "time",
+                causality=Fmi3Causality.independent,
+                variability=Fmi3Variability.continuous,
+            )
+        )
+        self.register_variable(
+            Float64(
+                "x0",
+                causality=Fmi3Causality.output,
+                start=2,
+                variability=Fmi3Variability.continuous,
+                initial=Fmi3Initial.exact,
+            )
+        )
+        self.register_variable(
+            Float64(
+                "x1",
+                causality=Fmi3Causality.output,
+                start=0,
+                variability=Fmi3Variability.continuous,
+                initial=Fmi3Initial.exact,
+            )
+        )
+        self.register_variable(
+            Float64(
+                "derx0",
+                causality=Fmi3Causality.local,
+                variability=Fmi3Variability.continuous,
+                derivative=1,
+            )
+        )
+        self.register_variable(
+            Float64(
+                "derx1",
+                causality=Fmi3Causality.local,
+                variability=Fmi3Variability.continuous,
+                derivative=2,
+            )
+        )
+        self.register_variable(
+            Float64(
+                "mu",
+                causality=Fmi3Causality.parameter,
+                variability=Fmi3Variability.fixed,
+            )
+        )
 
     def get_continuous_state_derivatives(self) -> List[float]:
         self.derx0 = self.x1
         self.derx1 = self.mu * ((1 - self.x0**2) * self.x1) - self.x0
         return [self.derx0, self.derx1]
-        
-
 ```
 
 Note: There is a hard requirement that we have a `self.time` member in the derived class.

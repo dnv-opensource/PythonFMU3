@@ -24,22 +24,34 @@ Model Exchange FMUs require specific variable declarations:
 <!-- skip-test -->
 ```python
 # Independent variable (time)
-self.register_variable(Float64("time", 
-                              causality=Fmi3Causality.independent, 
-                              variability=Fmi3Variability.continuous))
+self.register_variable(
+    Float64(
+        "time",
+        causality=Fmi3Causality.independent,
+        variability=Fmi3Variability.continuous,
+    )
+)
 
 # States with initial values
-self.register_variable(Float64("x0", 
-                              causality=Fmi3Causality.output,
-                              start=2.0,                    # Initial value
-                              variability=Fmi3Variability.continuous,
-                              initial=Fmi3Initial.exact))   # Must be exact
+self.register_variable(
+    Float64(
+        "x0",
+        causality=Fmi3Causality.output,
+        start=2.0,  # Initial value
+        variability=Fmi3Variability.continuous,
+        initial=Fmi3Initial.exact,
+    )
+)  # Must be exact
 
 # Derivatives (local variables)
-self.register_variable(Float64("derx0", 
-                              causality=Fmi3Causality.local,
-                              variability=Fmi3Variability.continuous,
-                              derivative=1))                # Derivative of variable 1 (x0)
+self.register_variable(
+    Float64(
+        "derx0",
+        causality=Fmi3Causality.local,
+        variability=Fmi3Variability.continuous,
+        derivative=1,
+    )
+)  # Derivative of variable 1 (x0)
 ```
 <!-- /skip-test -->
 
@@ -62,13 +74,23 @@ def get_continuous_state_derivatives(self):
 ## Example
 
 ```python
-
-from pythonfmu3 import Fmi3Causality, ModelExchange, Fmi3Variability, Fmi3SlaveBase, Fmi3Status, Float64, Fmi3Initial, Unit, Float64Type, Fmi3StepResult
+from pythonfmu3 import (
+    Fmi3Causality,
+    ModelExchange,
+    Fmi3Variability,
+    Fmi3SlaveBase,
+    Fmi3Status,
+    Float64,
+    Fmi3Initial,
+    Unit,
+    Float64Type,
+    Fmi3StepResult,
+)
 
 from typing import List
 
-class VanDerPol(Fmi3SlaveBase, ModelExchange):
 
+class VanDerPol(Fmi3SlaveBase, ModelExchange):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -82,22 +104,62 @@ class VanDerPol(Fmi3SlaveBase, ModelExchange):
         self.derx0 = 0.0
         self.derx1 = 0.0
 
-        self.register_variable(Float64("time", causality=Fmi3Causality.independent, variability=Fmi3Variability.continuous))
-        self.register_variable(Float64("x0", causality=Fmi3Causality.output, start=2, variability=Fmi3Variability.continuous, initial=Fmi3Initial.exact))
-        self.register_variable(Float64("x1", causality=Fmi3Causality.output, start=0, variability=Fmi3Variability.continuous, initial=Fmi3Initial.exact))
-        self.register_variable(Float64("derx0", causality=Fmi3Causality.local, variability=Fmi3Variability.continuous, derivative=1))
-        self.register_variable(Float64("derx1", causality=Fmi3Causality.local, variability=Fmi3Variability.continuous, derivative=2))
-        self.register_variable(Float64("mu", causality=Fmi3Causality.parameter, variability=Fmi3Variability.fixed))
-
+        self.register_variable(
+            Float64(
+                "time",
+                causality=Fmi3Causality.independent,
+                variability=Fmi3Variability.continuous,
+            )
+        )
+        self.register_variable(
+            Float64(
+                "x0",
+                causality=Fmi3Causality.output,
+                start=2,
+                variability=Fmi3Variability.continuous,
+                initial=Fmi3Initial.exact,
+            )
+        )
+        self.register_variable(
+            Float64(
+                "x1",
+                causality=Fmi3Causality.output,
+                start=0,
+                variability=Fmi3Variability.continuous,
+                initial=Fmi3Initial.exact,
+            )
+        )
+        self.register_variable(
+            Float64(
+                "derx0",
+                causality=Fmi3Causality.local,
+                variability=Fmi3Variability.continuous,
+                derivative=1,
+            )
+        )
+        self.register_variable(
+            Float64(
+                "derx1",
+                causality=Fmi3Causality.local,
+                variability=Fmi3Variability.continuous,
+                derivative=2,
+            )
+        )
+        self.register_variable(
+            Float64(
+                "mu",
+                causality=Fmi3Causality.parameter,
+                variability=Fmi3Variability.fixed,
+            )
+        )
 
     def get_continuous_state_derivatives(self) -> List[float]:
         self.derx0 = self.x1
         self.derx1 = self.mu * ((1 - self.x0**2) * self.x1) - self.x0
         return [self.derx0, self.derx1]
-       
+
     def get_nominals_of_continuous_states(self, nStates: int) -> List[float]:
         return [1.0, 1.0]
-
 ```
 
 
@@ -125,15 +187,16 @@ result = fmpy.simulate_fmu(
     fmu_filename,
     stop_time=20.0,
     step_size=0.01,
-    start_values={'mu': 1.0, 'x0': 2.0, 'x1': 0.0}
+    start_values={"mu": 1.0, "x0": 2.0, "x1": 0.0},
 )
 
 # Plot results
 import matplotlib.pyplot as plt
-plt.plot(result['time'], result['x0'], label='x0')
-plt.plot(result['time'], result['x1'], label='x1')
-plt.xlabel('Time')
-plt.ylabel('State Values')
+
+plt.plot(result["time"], result["x0"], label="x0")
+plt.plot(result["time"], result["x1"], label="x1")
+plt.xlabel("Time")
+plt.ylabel("State Values")
 plt.legend()
 plt.grid(True)
 plt.show()
@@ -147,7 +210,16 @@ For systems with discrete events. Firstly, mark the event indicators in register
 
 <!-- skip-test -->
 ```python
-self.register_variable(Float64("h", causality=Fmi3Causality.output, start=1, variability=Fmi3Variability.continuous, initial=Fmi3Initial.exact), has_event_indicator=True)
+self.register_variable(
+    Float64(
+        "h",
+        causality=Fmi3Causality.output,
+        start=1,
+        variability=Fmi3Variability.continuous,
+        initial=Fmi3Initial.exact,
+    ),
+    has_event_indicator=True,
+)
 ```
 <!-- /skip-test -->
 
@@ -157,6 +229,7 @@ Then define the event methods, `get_event_indicators()` and `update_discrete_sta
 ```python
 def get_event_indicators(self):
     return [0.2]
+
 
 def update_discrete_states(self):
     """Handle discrete state updates after events"""
@@ -169,7 +242,15 @@ def update_discrete_states(self):
 ### Example
 
 ```python
-from pythonfmu3 import Fmi3Causality, Fmi3Variability, Fmi3SlaveBase, ModelExchange, Float64, Fmi3Initial, Fmi3UpdateDiscreteStatesResult
+from pythonfmu3 import (
+    Fmi3Causality,
+    Fmi3Variability,
+    Fmi3SlaveBase,
+    ModelExchange,
+    Float64,
+    Fmi3Initial,
+    Fmi3UpdateDiscreteStatesResult,
+)
 
 from typing import List
 
@@ -177,8 +258,8 @@ import sys
 
 EVENT_EPS = 1e-12
 
-class BouncingBall(Fmi3SlaveBase, ModelExchange):
 
+class BouncingBall(Fmi3SlaveBase, ModelExchange):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -194,50 +275,94 @@ class BouncingBall(Fmi3SlaveBase, ModelExchange):
         self.e = 0.7
         self.v_min = 0.1
 
-        self.register_variable(Float64("time", causality=Fmi3Causality.independent, variability=Fmi3Variability.continuous))
+        self.register_variable(
+            Float64(
+                "time",
+                causality=Fmi3Causality.independent,
+                variability=Fmi3Variability.continuous,
+            )
+        )
 
-        self.register_variable(Float64("h", causality=Fmi3Causality.output, start=1, variability=Fmi3Variability.continuous, initial=Fmi3Initial.exact),
-                                has_event_indicator=True)
-        self.register_variable(Float64("derh", causality=Fmi3Causality.local, variability=Fmi3Variability.continuous, derivative=1))
-        self.register_variable(Float64("v", causality=Fmi3Causality.output, start=0, variability=Fmi3Variability.continuous, initial=Fmi3Initial.exact))
-        self.register_variable(Float64("derv", causality=Fmi3Causality.local, variability=Fmi3Variability.continuous, derivative=3))
+        self.register_variable(
+            Float64(
+                "h",
+                causality=Fmi3Causality.output,
+                start=1,
+                variability=Fmi3Variability.continuous,
+                initial=Fmi3Initial.exact,
+            ),
+            has_event_indicator=True,
+        )
+        self.register_variable(
+            Float64(
+                "derh",
+                causality=Fmi3Causality.local,
+                variability=Fmi3Variability.continuous,
+                derivative=1,
+            )
+        )
+        self.register_variable(
+            Float64(
+                "v",
+                causality=Fmi3Causality.output,
+                start=0,
+                variability=Fmi3Variability.continuous,
+                initial=Fmi3Initial.exact,
+            )
+        )
+        self.register_variable(
+            Float64(
+                "derv",
+                causality=Fmi3Causality.local,
+                variability=Fmi3Variability.continuous,
+                derivative=3,
+            )
+        )
 
-        self.register_variable(Float64("g", causality=Fmi3Causality.parameter, variability=Fmi3Variability.fixed))
-        self.register_variable(Float64("e", causality=Fmi3Causality.parameter, variability=Fmi3Variability.tunable))
-        self.register_variable(Float64("v_min", variability=Fmi3Variability.constant, start=0.1))
-        
-
+        self.register_variable(
+            Float64(
+                "g",
+                causality=Fmi3Causality.parameter,
+                variability=Fmi3Variability.fixed,
+            )
+        )
+        self.register_variable(
+            Float64(
+                "e",
+                causality=Fmi3Causality.parameter,
+                variability=Fmi3Variability.tunable,
+            )
+        )
+        self.register_variable(
+            Float64("v_min", variability=Fmi3Variability.constant, start=0.1)
+        )
 
     def get_continuous_state_derivatives(self) -> List[float]:
         self.derh = self.v
         self.derv = self.g
         return [self.derh, self.derv]
-        
+
     def get_event_indicators(self) -> List[float]:
         z = [self.h]
-        if self.h > -EVENT_EPS and self.h <=0 and self.v > 0:
+        if self.h > -EVENT_EPS and self.h <= 0 and self.v > 0:
             z[0] = -EVENT_EPS
 
         return z
-    
+
     def update_discrete_states(self):
         fdsr = Fmi3UpdateDiscreteStatesResult()
 
         if self.h <= 0 and self.v < 0:
             self.h = sys.float_info.min
             self.v = -self.v * self.e
-            
+
             if self.v < self.v_min:
-                self.v = 0.0;
-                self.g = 0.0;
-            
+                self.v = 0.0
+                self.g = 0.0
+
             fdsr.valuesOfContinuousStatesChanged = True
 
         return fdsr
-
-
-
-
 ```
 
 ## Build the FMU
