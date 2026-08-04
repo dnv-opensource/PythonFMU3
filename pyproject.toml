@@ -92,5 +92,10 @@ required-environments = [
     # "sys_platform == 'darwin'",
 ]
 
-
+[tool.pytest]
+addopts = ["--strict-markers"]
+markers = [
+    "integration: marks integration tests",
+    "doc: marks documentation tests"
+]
 

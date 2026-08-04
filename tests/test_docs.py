@@ -25,8 +25,8 @@ def extract_python_code_from_md(md_file):
 
 @pytest.mark.doc
 def test_readme():
-    test_dir = pathlib.Path(__file__).parent
-    fpath = test_dir.parent.parent / "README.md"
+    test_dir = pathlib.Path(__file__).parent.resolve()
+    fpath = test_dir.parent / "README.md"
 
     # extract Python code
     code_blocks = extract_python_code_from_md(fpath)
@@ -45,8 +45,8 @@ def test_readme():
 @pytest.mark.doc
 def test_cosimulation_examples():
     """Test that all Python examples in usage.md actually work"""
-    test_dir = pathlib.Path(__file__).parent
-    usage_file = test_dir.parent.parent / "docs" / "usage.md"
+    test_dir = pathlib.Path(__file__).parent.resolve()
+    usage_file = test_dir.parent / "docs" / "usage.md"
 
     # Extract Python code
     code_blocks = extract_python_code_from_md(usage_file)
@@ -74,8 +74,8 @@ def test_cosimulation_examples():
 @pytest.mark.doc
 def test_model_exchange_examples():
     """Test Model Exchange examples"""
-    test_dir = pathlib.Path(__file__).parent
-    mx_file = test_dir.parent.parent / "docs" / "usageMX.md"
+    test_dir = pathlib.Path(__file__).parent.resolve()
+    mx_file = test_dir.parent / "docs" / "usageMX.md"
 
     code_blocks = extract_python_code_from_md(mx_file)
 

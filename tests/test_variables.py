@@ -422,7 +422,7 @@ def test_array_to_xml(name, start, dims):
 def test_array_output_to_xml(name, start, dims):
     import numpy as np
 
-    start = np.reshape(start, newshape=dims)
+    start = np.reshape(start, shape=dims)
     r = Float64(
         name,
         start,
