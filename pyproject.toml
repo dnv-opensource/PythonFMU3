@@ -1,0 +1,96 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pythonfmu3"
+version = "0.3.4"
+description = "A lightweight framework that enables the packaging of Python3.x code as co-simulation FMUs with (partial) FMI3 features support."
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [
+    { name = "Stephen Smith" },
+]
+keywords = [
+    "FMI", "simulation"
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: C++",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
+    # "Operating System :: MacOS",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: End Users/Desktop",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: English",
+]
+
+[project.optional-dependencies]
+tests = [
+    "fmpy",
+    "pytest",
+]
+
+[project.scripts]
+pythonfmu3 = "pythonfmu3.__main__:cli_main"
+
+[tool.hatch.version]
+path = "pythonfmu3/__init__.py"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/pythonfmu3",
+    "resources/*.dll",
+    "resources/*.dylib",
+    "resources/*.so",
+]
+
+[project.urls]
+Homepage = "https://github.com/stephensmith25/PythonFMU3"
+Documentation = "https://github.com/stephensmith25/PythonFMU3/README.html"
+Repository = "https://github.com/StephenSmith25/PythonFMU3.git"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0",
+    "pytest-cov>=7.1",
+    "ruff>=0.15.9",
+    "pyright>=1.1.408",
+    "mypy>=1.19.1",
+    "sourcery>=1.43.0",
+    "pre-commit>=4.5",
+    "Sphinx>=9.0",
+    "sphinx-argparse-cli>=1.21.3",
+    "sphinx-autodoc-typehints>=3.6",
+    "sphinxcontrib-mermaid>=2.0",
+    "myst-parser>=5.0",
+    "furo>=2025.12",
+    "scipy-stubs>=1.17.1",
+    "matplotlib>=3.10",
+]
+
+[tool.uv]
+default-groups = [
+    "dev",
+]
+
+native-tls = true
+required-environments = [
+    "sys_platform == 'win32'",
+    "sys_platform == 'linux'",
+    # "sys_platform == 'darwin'",
+]
+
+
+
