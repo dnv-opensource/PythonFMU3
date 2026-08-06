@@ -6,7 +6,9 @@
    which is transmitted to the orchestrator with a `getIntervalDecimal` call.
 """
 import numpy as np
-from pythonfmu3 import Fmi3Causality, Fmi3Slave, Float64, Int32
+from pythonfmu3 import Fmi3Slave
+from pythonfmu3.enums import Fmi3IntervalVariability, Fmi3Causality
+from pythonfmu3.variables import Float64, Int32, Clock 
 
 class TwoState(Fmi3Slave):
     """Two-state discrete event implementation"""
@@ -39,6 +41,10 @@ class TwoState(Fmi3Slave):
         self.register_variable(Float64("mttr", causality=Fmi3Causality.parameter, start=0.01))
         self.register_variable(Int32("seed", causality=Fmi3Causality.parameter, start=1))
         self.register_variable(Int32("state", causality=Fmi3Causality.output))
+        self.register_variable(Clock("next_interval",
+                                     interval_variability=Fmi3IntervalVariability.triggered,
+                                     
+                                     ))
 
     def get_next_interval(self):
         if self.state==0:

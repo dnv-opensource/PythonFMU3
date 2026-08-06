@@ -34,6 +34,14 @@ class Fmi3Variability(Enum):
     discrete = 3
     continuous = 4
 
+class Fmi3IntervalVariability(Enum):
+    constant = 0
+    fixed = 1
+    tunable = 2
+    changing = 3
+    countdown = 4
+    triggered = 5
+
 
 class Fmi3Status(IntEnum):
     ok = 0

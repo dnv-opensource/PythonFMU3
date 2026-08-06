@@ -9,7 +9,7 @@ from functools import reduce
 from typing import Any
 from xml.etree.ElementTree import Element
 
-from .enums import Fmi3Causality, Fmi3Initial, Fmi3Variability
+from .enums import Fmi3Causality, Fmi3Initial, Fmi3Variability, Fmi3IntervalVariability
 
 MAX_LENGTH = 1000
 
@@ -149,8 +149,20 @@ class ModelVariable(ABC):
         attrib = dict()
         for key, value in ChainMap(self._extras, self.__attrs).items():
             if value is not None:
-                attrib[key] = str(value.name if isinstance(value, Enum) else value)
+                attrib[key] = ModelVariable.to_str(value)
         return Element(self._type, attrib)
+    
+    @staticmethod
+    def to_str(val:Any):
+        """Helper method to translate python values to proper strings for use in xml."""
+        if isinstance(val, bool):
+            return str(val).lower()
+        elif isinstance(val, float):
+            return f"{val:.16g}"
+        elif isinstance(val, Enum):
+            return val.name
+        else:
+            return str(val)
 
     def __repr__(self) -> str:
         return (
@@ -167,7 +179,7 @@ class Start:
 
     def to_xml(self) -> Element:
         attrib = dict()
-        attrib["value"] = self.value
+        attrib["value"] = ModelVariable.to_str(self.value)
         return Element("Start", attrib)
 
 
@@ -216,7 +228,9 @@ class Arrayable:
     def dimensions(self) -> list[Dimension]:
         return self._dimensions
 
-    def get_start_str(self, value, formatter):
+    def get_start_str(self, value, formatter=None):
+        if formatter is None:
+            formatter = ModelVariable.to_str
         if len(self.dimensions) > 0:
             output = " ".join([formatter(val) for val in flatten(value)])
             if len(output) > MAX_LENGTH:
@@ -274,7 +288,7 @@ class Float64(ModelVariable, Arrayable):
             if value is not None:
                 # In order to not loose precision, a number of this type should be
                 # stored on an XML file with at least 16 significant digits
-                output = self.get_start_str(value, lambda v: f"{v:.16g}")
+                output = self.get_start_str(value)
                 attrib[key] = output
 
         if self.unit:
@@ -313,7 +327,7 @@ class Int32(ModelVariable, Arrayable):
         attrib = dict()
         for key, value in self.__attrs.items():
             if value is not None:
-                attrib[key] = self.get_start_str(value, lambda v: str(v))
+                attrib[key] = self.get_start_str(value)
         self._extras = attrib
         parent = super().to_xml()
 
@@ -347,7 +361,7 @@ class Int64(ModelVariable, Arrayable):
         attrib = dict()
         for key, value in self.__attrs.items():
             if value is not None:
-                attrib[key] = self.get_start_str(value, lambda v: str(v))
+                attrib[key] = self.get_start_str(value)
         self._extras = attrib
         parent = super().to_xml()
 
@@ -381,7 +395,7 @@ class UInt64(ModelVariable, Arrayable):
         attrib = dict()
         for key, value in self.__attrs.items():
             if value is not None:
-                attrib[key] = self.get_start_str(value, lambda v: str(v))
+                attrib[key] = self.get_start_str(value)
         self._extras = attrib
         parent = super().to_xml()
 
@@ -415,7 +429,7 @@ class Boolean(ModelVariable, Arrayable):
         attrib = dict()
         for key, value in self.__attrs.items():
             if value is not None:
-                attrib[key] = self.get_start_str(value, lambda v: str(v).lower())
+                attrib[key] = self.get_start_str(value)
         self._extras = attrib
         parent = super().to_xml()
 
@@ -449,12 +463,66 @@ class String(ModelVariable):
         attrib = dict()
         for key, value in self.__attrs.items():
             if value is not None:
-                attrib[key] = str(value, lambda v: str(v))
+                attrib[key] = str(value)
         self._extras = attrib
         parent = super().to_xml()
 
         if self.start is not None:
             parent.append(self._start.to_xml())
+
+        return parent
+
+class Clock(ModelVariable):
+    """Clock variable definition. See also fmi3Variable.xsd and fmi3AttributeGroups.xsd/fmi3ClockAttributes
+
+    Args:
+        name: name of the clock unique within FMU
+        can_be_deactivated: boolean flag
+        priority: optional explicit priority as unsigned int
+        interval_variability: required enumeration attribute, similar to variability
+        interval_decimal: optional initial specification of decimal interval + field
+        shift_decimal: optional delay of first clock activations. Default 0
+        supports_fraction: optional possibility to provide shifts as integer fractions
+        resolution: optional initial denominator of interval fraction
+        interval_counter: optional initial nominator of interval fraction
+        shift_counter: optional initial nominator of shift (first clock activation)
+    """
+    def __init__(
+        self,
+        name: str,
+        can_be_deactivated: bool = False,
+        priority: int|None = None,
+        interval_variability: Fmi3IntervalVariability = Fmi3IntervalVariability.constant,
+        interval_decimal: float|None = None,
+        shift_decimal: float = 0.0,
+        supports_fraction: bool = False,
+        resolution: int|None = None,
+        interval_counter: int|None = None,
+        shift_counter: int = 0,
+        **kwargs,
+    ):
+        ModelVariable.__init__(self, name, **kwargs)
+        self.__attrs = {'canBeDeactivated': can_be_deactivated,
+                        'priority': priority,
+                        'intervalVariability': interval_variability,
+                        'intervalDecimal': interval_decimal,
+                        'shiftDecimal': shift_decimal,
+                        'supportsFraction': supports_fraction,
+                        }
+        if supports_fraction:
+            self.__attrs.update( {'resolution': resolution,
+                                  'intervalCounter': interval_counter,
+                                  'shiftCounter': shift_counter,
+                                  })
+        self._type = "Clock"
+
+    def to_xml(self) -> Element:
+        attrib = dict()
+        for key, value in self.__attrs.items():
+            if value is not None:
+                attrib[key] = ModelVariable.to_str(value)
+        self._extras = attrib
+        parent = super().to_xml()
 
         return parent
 
