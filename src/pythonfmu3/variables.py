@@ -40,6 +40,10 @@ class ModelVariable(ABC):
         description (str, optional): Variable description
         initial (:obj:`Fmi3Initial`, optional): Variable initial status
         variability (:obj:`Fmi3Variability`, optional): Variable variability
+        declared_type: optional reference to a previously declared type (see VariableType)
+        getter: optional explicit definition of a getter function
+        setter: optional explicit definition of a setter function
+        canHandleMultipleSetPerTimeInstant: boolean flag. See FMI spec.
     """
 
     def __init__(
@@ -52,6 +56,7 @@ class ModelVariable(ABC):
         declared_type: str | None = None,
         getter: Any = None,
         setter: Any = None,
+        can_handle_multiple_set_per_time_instant: bool = True
     ):
         self.getter = getter
         self.setter = setter
@@ -69,7 +74,7 @@ class ModelVariable(ABC):
             "variability": variability,
             "initial": initial,
             "declaredType": declared_type,
-            # 'canHandleMultipleSetPerTimeInstant': # Only for ME
+            "canHandleMultipleSetPerTimeInstant": can_handle_multiple_set_per_time_instant,
         }
         self._extras = {}
 

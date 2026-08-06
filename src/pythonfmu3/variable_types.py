@@ -36,6 +36,7 @@ class Float64Type(VariableType):
 
 
 class Item:
+    """Helper class for EnumerationType definitions."""
     tag = "Item"
 
     def __init__(self, name: str, value: int, description: str = "", **kwargs):
