@@ -68,6 +68,8 @@ public:
     /* Called from fmi3SetXxx()/fmiSetXxx().
      * Throws std::logic_error by default.
      */
+    virtual void EnterEventMode();
+
     virtual void SetFloat64(
         const FMIValueReference vr[],
         std::size_t nvr,
@@ -159,7 +161,7 @@ public:
         cppfmu::FMIBoolean* valuesOfContinuousStatesChanged,
         cppfmu::FMIBoolean* nextEventTimeDefined,
         cppfmu::FMIFloat64* nextEventTime) = 0;
-    
+
 
     virtual void GetFMUstate(fmi3FMUState& state) = 0;
     virtual void SetFMUstate(const fmi3FMUState& state) = 0;

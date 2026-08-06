@@ -50,6 +50,11 @@ void SlaveInstance::Reset()
     // Do nothing
 }
 
+void SlaveInstance::EnterEventMode()
+{
+    // Do nothing
+}
+
 
 void SlaveInstance::SetFloat64(
     const FMIValueReference /*vr*/[],

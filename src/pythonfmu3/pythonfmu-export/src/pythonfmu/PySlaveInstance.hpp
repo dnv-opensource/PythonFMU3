@@ -25,6 +25,7 @@ public:
     void ExitInitializationMode() override;
     void Terminate() override;
     void Reset() override;
+    void EnterEventMode() override;
     cppfmu::FMIStatus DoStep(cppfmu::FMIFloat64 currentCommunicationPoint,
         cppfmu::FMIFloat64 communicationStepSize,
         cppfmu::FMIBoolean newStep,
@@ -50,7 +51,7 @@ public:
     void GetFMUstate(fmi3FMUState& State) override;
     void SetFMUstate(const fmi3FMUState& State) override;
     void FreeFMUstate(fmi3FMUState& State) override;
-    
+
     // Model Exchange methods
     void GetContinuousStates(cppfmu::FMIFloat64* continuousStates, std::size_t nStates) const override;
     void GetNumberOfContinuousStates(std::size_t& nStates) const override;
