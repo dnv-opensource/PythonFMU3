@@ -25,7 +25,6 @@ public:
     void ExitInitializationMode() override;
     void Terminate() override;
     void Reset() override;
-    void EnterEventMode() override;
     cppfmu::FMIStatus DoStep(cppfmu::FMIFloat64 currentCommunicationPoint,
         cppfmu::FMIFloat64 communicationStepSize,
         cppfmu::FMIBoolean newStep,
@@ -51,6 +50,41 @@ public:
     void GetFMUstate(fmi3FMUState& State) override;
     void SetFMUstate(const fmi3FMUState& State) override;
     void FreeFMUstate(fmi3FMUState& State) override;
+
+    // Event- and Clock-related methods
+    void EnterEventMode() override;
+    void GetClock(const cppfmu::FMIValueReference* vr, std::size_t nvr, cppfmu::FMIClock* values) const override;
+    void SetClock(const cppfmu::FMIValueReference* vr, std::size_t nvr, const cppfmu::FMIClock* values) override;
+    void GetIntervalDecimal(
+        const cppfmu::FMIValueReference* vr,
+        std::size_t nvr,
+        cppfmu::FMIFloat64* intervals,
+        cppfmu::FMIIntervalQualifier* qualifiers) const override;
+    void SetIntervalDecimal(const cppfmu::FMIValueReference* vr, std::size_t nvr, const cppfmu::FMIFloat64* intervals) override;
+    void GetShiftDecimal(const cppfmu::FMIValueReference* vr, std::size_t nvr, cppfmu::FMIFloat64* shifts) const override;
+    void SetShiftDecimal(const cppfmu::FMIValueReference* vr, std::size_t nvr, const cppfmu::FMIFloat64* shifts) override;
+    void GetIntervalFraction(
+        const cppfmu::FMIValueReference* vr,
+        std::size_t nvr,
+        cppfmu::FMIUInt64* intervalCounters,
+        cppfmu::FMIUInt64* resolutions,
+        cppfmu::FMIIntervalQualifier* qualifiers) const override;
+    void SetIntervalFraction(
+        const cppfmu::FMIValueReference* vr,
+        std::size_t nvr,
+        const cppfmu::FMIUInt64* intervalCounters,
+        const cppfmu::FMIUInt64* resolutions) override;
+    void GetShiftFraction(
+        const cppfmu::FMIValueReference* vr,
+        std::size_t nvr,
+        cppfmu::FMIUInt64* shiftCounters,
+        cppfmu::FMIUInt64* resolutions) const override;
+    void SetShiftFraction(
+        const cppfmu::FMIValueReference* vr,
+        std::size_t nvr,
+        const cppfmu::FMIUInt64* shiftCounters,
+        const cppfmu::FMIUInt64* resolutions) override;
+
 
     // Model Exchange methods
     void GetContinuousStates(cppfmu::FMIFloat64* continuousStates, std::size_t nStates) const override;

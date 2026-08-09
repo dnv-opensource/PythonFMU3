@@ -50,12 +50,6 @@ void SlaveInstance::Reset()
     // Do nothing
 }
 
-void SlaveInstance::EnterEventMode()
-{
-    // Do nothing
-}
-
-
 void SlaveInstance::SetFloat64(
     const FMIValueReference /*vr*/[],
     std::size_t nvr,
@@ -66,7 +60,6 @@ void SlaveInstance::SetFloat64(
         throw std::logic_error("Attempted to set nonexistent variable");
     }
 }
-
 
 void SlaveInstance::SetInt32(
     const FMIValueReference /*vr*/[],
@@ -101,7 +94,6 @@ void SlaveInstance::SetUInt64(
     }
 }
 
-
 void SlaveInstance::SetBoolean(
     const FMIValueReference /*vr*/[],
     std::size_t nvr,
@@ -112,7 +104,6 @@ void SlaveInstance::SetBoolean(
         throw std::logic_error("Attempted to set nonexistent variable");
     }
 }
-
 
 void SlaveInstance::SetString(
     const FMIValueReference /*vr*/[],
@@ -196,6 +187,94 @@ void SlaveInstance::GetString(
         throw std::logic_error("Attempted to set nonexistent variable");
     }
 }
+
+// Event- and Clock-related functions
+void SlaveInstance::EnterEventMode()
+{
+    // Do nothing
+}
+void SlaveInstance::GetClock(  const FMIValueReference /*vr*/[], std::size_t nvr, FMIClock /*values*/[]) const
+{
+    if (nvr != 0) {
+        throw std::logic_error("Attempted to set nonexistent variable");
+    }
+}
+void SlaveInstance::SetClock(  const FMIValueReference /*vr*/[], std::size_t nvr, const FMIClock /*values*/[])
+{
+    if (nvr != 0) {
+        throw std::logic_error("Attempted to set nonexistent variable");
+    }
+}
+void SlaveInstance::GetIntervalDecimal(
+        const FMIValueReference /*vr*/[],
+        std::size_t nvr,
+        FMIFloat64 /*intervals*/[],
+        FMIIntervalQualifier /*qualifiers*/[]) const
+{
+    if (nvr != 0) {
+        throw std::logic_error("Attempted to set nonexistent variable");
+    }
+}
+void SlaveInstance::SetIntervalDecimal(const FMIValueReference /*vr*/[], std::size_t nvr, const FMIFloat64 /*intervals*/[])
+{
+    if (nvr != 0) {
+        throw std::logic_error("Attempted to set nonexistent variable");
+    }
+}
+void SlaveInstance::GetShiftDecimal( const FMIValueReference /*vr*/[], std::size_t nvr, FMIFloat64 /*shifts*/[]) const
+{
+    if (nvr != 0) {
+        throw std::logic_error("Attempted to set nonexistent variable");
+    }
+}
+void SlaveInstance::SetShiftDecimal( const FMIValueReference /*vr*/[], std::size_t nvr, const FMIFloat64 /*shifts*/[])
+{
+    if (nvr != 0) {
+        throw std::logic_error("Attempted to set nonexistent variable");
+    }
+}
+void SlaveInstance::GetIntervalFraction(
+        const FMIValueReference /*vr*/[],
+        std::size_t nvr,
+        FMIUInt64 /*intervalCounters*/[],
+        FMIUInt64 /*resolutions*/[],
+        FMIIntervalQualifier /*qualifiers*/[]) const
+{
+    if (nvr != 0) {
+        throw std::logic_error("Attempted to set nonexistent variable");
+    }
+}
+void SlaveInstance::SetIntervalFraction(
+        const FMIValueReference /*vr*/[],
+        std::size_t nvr,
+        const FMIUInt64 /*intervalCounters*/[],
+        const FMIUInt64 /*resolutions*/[])
+{
+    if (nvr != 0) {
+        throw std::logic_error("Attempted to set nonexistent variable");
+    }
+}
+void SlaveInstance::GetShiftFraction(
+        const FMIValueReference /*vr*/[],
+        std::size_t nvr,
+        FMIUInt64 /*shiftCounters*/[],
+        FMIUInt64 /*resolutions*/[]) const
+{
+    if (nvr != 0) {
+        throw std::logic_error("Attempted to set nonexistent variable");
+    }
+}
+void SlaveInstance::SetShiftFraction(
+        const FMIValueReference /*vr*/[],
+        std::size_t nvr,
+        const FMIUInt64 /*shiftCounters*/[],
+        const FMIUInt64 /*resolutions*/[])
+{
+    if (nvr != 0) {
+        throw std::logic_error("Attempted to set nonexistent variable");
+    }
+}
+
 
 
 SlaveInstance::~SlaveInstance() CPPFMU_NOEXCEPT

@@ -43,7 +43,7 @@ class TwoState(Fmi3Slave):
         self.register_variable(Int32("state", causality=Fmi3Causality.output))
         self.register_variable(Clock("next_interval",
                                      interval_variability=Fmi3IntervalVariability.triggered,
-                                     
+                                     interval_decimal=self.next_interval,
                                      ))
 
     def get_next_interval(self):

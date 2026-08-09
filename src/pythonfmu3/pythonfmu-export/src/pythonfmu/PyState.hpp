@@ -33,10 +33,10 @@ namespace pythonfmu
 
     private:
 
-        // In accordance to the documentation https://docs.python.org/3/c-api/init.html#c.Py_FinalizeEx 
+        // In accordance to the documentation https://docs.python.org/3/c-api/init.html#c.Py_FinalizeEx
         // the Py_Initialize/Py_Finalize should be called from the same
         // thread. The FMI standard allows to call fmi functions from different threads, also different threads
-        // could be used for loading unloading the FMU libraries. There is a deadlock, when the simulation tool 
+        // could be used for loading unloading the FMU libraries. There is a deadlock, when the simulation tool
         // unloads the FMU library from the thread which is differs from the thread where the Py_Initialize was called.
         // Create a new thread which is used for calling Py_Initialize and Py_Deinitialize. The thread waits for
         // notification from destructor and then calls Py_Deinitialize.

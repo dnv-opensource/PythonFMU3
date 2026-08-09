@@ -40,11 +40,13 @@ typedef fmi3Int64 FMIInt64;
 typedef fmi3UInt64 FMIUInt64;
 typedef fmi3Boolean FMIBoolean;
 typedef fmi3String FMIString;
+typedef fmi3Clock FMIClock;
 typedef fmi3LogMessageCallback FMICallbackLogger;
 typedef fmi3Instance FMIComponent;
 typedef fmi3InstanceEnvironment FMIComponentEnvironment;
 typedef fmi3Status FMIStatus;
 typedef fmi3ValueReference FMIValueReference;
+typedef fmi3IntervalQualifier FMIIntervalQualifier;
 
 const FMIBoolean FMIFalse = fmi3False;
 const FMIBoolean FMITrue = fmi3True;
@@ -54,6 +56,10 @@ const FMIStatus FMIWarning = fmi3Warning;
 const FMIStatus FMIDiscard = fmi3Discard;
 const FMIStatus FMIError = fmi3Error;
 const FMIStatus FMIFatal = fmi3Fatal;
+
+const FMIIntervalQualifier FMIIntervalNotYetKnown = fmi3IntervalNotYetKnown;
+const FMIIntervalQualifier FMIIntervalUnchanged = fmi3IntervalUnchanged;
+const FMIIntervalQualifier FMIIntervalChanged = fmi3IntervalChanged;
 
 using String = std::string;
 

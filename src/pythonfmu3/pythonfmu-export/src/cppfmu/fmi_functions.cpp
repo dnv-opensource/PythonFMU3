@@ -16,14 +16,14 @@
     const fmi3ValueReference vr[], \
     size_t nValueReferences, \
     var values[], \
-    size_t nValues) { NOT_IMPLEMENTED;}  
+    size_t nValues) { NOT_IMPLEMENTED;}
 
 #define NOT_IMPLEMENTED_SETTER(suffix, var) fmi3Status fmi3Set##suffix ( \
     fmi3Instance c, \
     const fmi3ValueReference vr[], \
     size_t nValueReferences, \
     const var values[], \
-    size_t nValues) { NOT_IMPLEMENTED;}  
+    size_t nValues) { NOT_IMPLEMENTED;}
 
 namespace
 {
@@ -238,7 +238,7 @@ fmi3Status fmi3ExitInitializationMode(fmi3Instance c)
 
 fmi3Status fmi3EnterConfigurationMode(fmi3Instance c)
 {
-    
+
     const auto component = reinterpret_cast<Component*>(c);
     component->state = Component::State::ConfigurationMode;
     return fmi3OK;
@@ -554,7 +554,7 @@ fmi3Status fmi3GetContinuousStates(
     auto component = reinterpret_cast<Component*>(c);
     try {
         component->slave->GetContinuousStates(continuousStates, nStates);
-        return fmi3OK;  
+        return fmi3OK;
     } catch (const cppfmu::FatalError& e) {
         component->logger.Log(fmi3Fatal, "", e.what());
         return fmi3Fatal;
@@ -643,7 +643,7 @@ fmi3Status fmi3GetNominalsOfContinuousStates(
     const auto component = reinterpret_cast<Component*>(c);
     try {
         component->slave->GetNominalsOfContinuousStates(nominalContinuousStates, nStates);
-        return fmi3OK;  
+        return fmi3OK;
     } catch (const cppfmu::FatalError& e) {
         component->logger.Log(fmi3Fatal, "", e.what());
         return fmi3Fatal;
@@ -654,7 +654,7 @@ fmi3Status fmi3GetNominalsOfContinuousStates(
 }
 
 fmi3Status fmi3GetNumberOfContinuousStates(
-    fmi3Instance c, 
+    fmi3Instance c,
     std::size_t * nContinuousStates)
 {
     const auto component = reinterpret_cast<Component*>(c);
@@ -671,7 +671,7 @@ fmi3Status fmi3GetNumberOfContinuousStates(
 }
 
 fmi3Status fmi3GetNumberOfEventIndicators(
-    fmi3Instance c, 
+    fmi3Instance c,
     std::size_t * nEventIndicators)
 {
     const auto component = reinterpret_cast<Component*>(c);
@@ -728,7 +728,7 @@ fmi3Status fmi3CompletedIntegratorStep(
 {
     *enterEventMode = false;
     *terminateSimulation = false;
-    
+
     return fmi3OK;
 }
 
@@ -912,8 +912,200 @@ fmi3Status fmi3DoStep(
         return fmi3Error;
     }
 }
+
+// Clock-related functions
+
+fmi3Status fmi3GetClock(
+    fmi3Instance c,
+    const fmi3ValueReference vr[],
+    size_t nvr,
+    fmi3Clock values[])
+{
+    const auto component = reinterpret_cast<Component*>(c);
+    try {
+        component->slave->GetClock(vr, nvr, values);
+        return fmi3OK;
+    } catch (const cppfmu::FatalError& e) {
+        component->logger.Log(fmi3Fatal, "", e.what());
+        return fmi3Fatal;
+    } catch (const std::exception& e) {
+        component->logger.Log(fmi3Error, "", e.what());
+        return fmi3Error;
+    }
 }
 
+}
+fmi3Status fmi3SetClock(
+    fmi3Instance c,
+    const fmi3ValueReference vr[],
+    size_t nvr,
+    const fmi3Clock values[])
+{
+    const auto component = reinterpret_cast<Component*>(c);
+    try {
+        component->slave->SetClock(vr, nvr, values);
+        return fmi3OK;
+    } catch (const cppfmu::FatalError& e) {
+        component->logger.Log(fmi3Fatal, "", e.what());
+        return fmi3Fatal;
+    } catch (const std::exception& e) {
+        component->logger.Log(fmi3Error, "", e.what());
+        return fmi3Error;
+    }
+}
+
+fmi3Status fmi3GetIntervalDecimal(
+    fmi3Instance c,
+    const fmi3ValueReference vr[],
+    size_t nvr,
+    fmi3Float64 intervals[],
+    fmi3IntervalQualifier qualifiers[])
+{
+    const auto component = reinterpret_cast<Component*>(c);
+    try {
+        component->slave->GetIntervalDecimal(vr, nvr, intervals, qualifiers);
+        return fmi3OK;
+    } catch (const cppfmu::FatalError& e) {
+        component->logger.Log(fmi3Fatal, "", e.what());
+        return fmi3Fatal;
+    } catch (const std::exception& e) {
+        component->logger.Log(fmi3Error, "", e.what());
+        return fmi3Error;
+    }
+}
+fmi3Status fmi3SetIntervalDecimal(
+    fmi3Instance c,
+    const fmi3ValueReference vr[],
+    size_t nvr,
+    const fmi3Float64 intervals[])
+{
+    const auto component = reinterpret_cast<Component*>(c);
+    try {
+        component->slave->SetIntervalDecimal(vr, nvr, intervals);
+        return fmi3OK;
+    } catch (const cppfmu::FatalError& e) {
+        component->logger.Log(fmi3Fatal, "", e.what());
+        return fmi3Fatal;
+    } catch (const std::exception& e) {
+        component->logger.Log(fmi3Error, "", e.what());
+        return fmi3Error;
+    }
+}
+fmi3Status fmi3GetShiftDecimal(
+    fmi3Instance c,
+    const fmi3ValueReference vr[],
+    size_t nvr,
+    fmi3Float64 shifts[])
+{
+    const auto component = reinterpret_cast<Component*>(c);
+    try {
+        component->slave->GetShiftDecimal(vr, nvr, shifts);
+        return fmi3OK;
+    } catch (const cppfmu::FatalError& e) {
+        component->logger.Log(fmi3Fatal, "", e.what());
+        return fmi3Fatal;
+    } catch (const std::exception& e) {
+        component->logger.Log(fmi3Error, "", e.what());
+        return fmi3Error;
+    }
+}
+fmi3Status fmi3SetShiftDecimal(
+    fmi3Instance c,
+    const fmi3ValueReference vr[],
+    size_t nvr,
+    const fmi3Float64 shifts[])
+{
+    const auto component = reinterpret_cast<Component*>(c);
+    try {
+        component->slave->SetShiftDecimal(vr, nvr, shifts);
+        return fmi3OK;
+    } catch (const cppfmu::FatalError& e) {
+        component->logger.Log(fmi3Fatal, "", e.what());
+        return fmi3Fatal;
+    } catch (const std::exception& e) {
+        component->logger.Log(fmi3Error, "", e.what());
+        return fmi3Error;
+    }
+}
+fmi3Status fmi3GetIntervalFraction(
+    fmi3Instance c,
+    const fmi3ValueReference vr[],
+    size_t nvr,
+    fmi3UInt64 intervalCounters[],
+    fmi3UInt64 resolutions[],
+    fmi3IntervalQualifier qualifiers[])
+{
+    const auto component = reinterpret_cast<Component*>(c);
+    try {
+        component->slave->GetIntervalFraction(vr, nvr, intervalCounters, resolutions, qualifiers);
+        return fmi3OK;
+    } catch (const cppfmu::FatalError& e) {
+        component->logger.Log(fmi3Fatal, "", e.what());
+        return fmi3Fatal;
+    } catch (const std::exception& e) {
+        component->logger.Log(fmi3Error, "", e.what());
+        return fmi3Error;
+    }
+}
+fmi3Status fmi3SetIntervalFraction(
+    fmi3Instance c,
+    const fmi3ValueReference vr[],
+    size_t nvr,
+    const fmi3UInt64 intervalCounters[],
+    const fmi3UInt64 resolutions[])
+{
+    const auto component = reinterpret_cast<Component*>(c);
+    try {
+        component->slave->SetIntervalFraction(vr, nvr, intervalCounters, resolutions);
+        return fmi3OK;
+    } catch (const cppfmu::FatalError& e) {
+        component->logger.Log(fmi3Fatal, "", e.what());
+        return fmi3Fatal;
+    } catch (const std::exception& e) {
+        component->logger.Log(fmi3Error, "", e.what());
+        return fmi3Error;
+    }
+}
+
+fmi3Status fmi3GetShiftFraction(
+    fmi3Instance c,
+    const fmi3ValueReference vr[],
+    size_t nvr,
+    fmi3UInt64 shiftCounters[],
+    fmi3UInt64 resolutions[])
+{
+    const auto component = reinterpret_cast<Component*>(c);
+    try {
+        component->slave->GetShiftFraction(vr, nvr, shiftCounters, resolutions);
+        return fmi3OK;
+    } catch (const cppfmu::FatalError& e) {
+        component->logger.Log(fmi3Fatal, "", e.what());
+        return fmi3Fatal;
+    } catch (const std::exception& e) {
+        component->logger.Log(fmi3Error, "", e.what());
+        return fmi3Error;
+    }
+}
+
+fmi3Status fmi3SetShiftFraction(
+    fmi3Instance c,
+    const fmi3ValueReference vr[],
+    size_t nvr,
+    const fmi3UInt64 shiftCounters[],
+    const fmi3UInt64 resolutions[])
+{
+    const auto component = reinterpret_cast<Component*>(c);
+    try {
+        component->slave->SetShiftFraction(vr, nvr, shiftCounters, resolutions);
+        return fmi3OK;
+    } catch (const cppfmu::FatalError& e) {
+        component->logger.Log(fmi3Fatal, "", e.what());
+        return fmi3Fatal;
+    } catch (const std::exception& e) {
+        component->logger.Log(fmi3Error, "", e.what());
+        return fmi3Error;
+    }
+}
 // NOT IMPLEMENTED
 
 NOT_IMPLEMENTED_GETTER(Float32, fmi3Float32);
@@ -931,22 +1123,6 @@ NOT_IMPLEMENTED_SETTER(UInt16, fmi3UInt16);
 NOT_IMPLEMENTED_GETTER(UInt32, fmi3UInt32);
 NOT_IMPLEMENTED_SETTER(UInt32, fmi3UInt32);
 
-
-fmi3Status fmi3GetClock(fmi3Instance instance,
-    const fmi3ValueReference valueReferences[],
-    size_t nValueReferences,
-    fmi3Clock values[])
-{
-    NOT_IMPLEMENTED;
-}
-
-fmi3Status fmi3SetClock(fmi3Instance instance,
-    const fmi3ValueReference valueReferences[],
-    size_t nValueReferences,
-    const fmi3Clock values[])
-{
-    NOT_IMPLEMENTED;
-}
 
 fmi3Status fmi3GetBinary(fmi3Instance instance,
     const fmi3ValueReference valueReferences[],
@@ -998,71 +1174,6 @@ fmi3Status fmi3GetAdjointDerivative(fmi3Instance instance,
     size_t nSensitivity)
 {
     NOT_IMPLEMENTED;
-}
-
-fmi3Status fmi3GetIntervalDecimal(
-    fmi3Instance instance, 
-    const fmi3ValueReference valueReferences[],
-    size_t nValueReferences, 
-    fmi3Float64 intervals[],
-    fmi3IntervalQualifier qualifiers[])
-{
-  NOT_IMPLEMENTED;
-}
-
-fmi3Status fmi3GetIntervalFraction(
-    fmi3Instance instance,
-    const fmi3ValueReference valueReferences[],
-    size_t nValueReferences,
-    fmi3UInt64 intervalCounters[],
-    fmi3UInt64 resolutions[],
-    fmi3IntervalQualifier qualifiers[])
-{
-  NOT_IMPLEMENTED;
-}
-
-fmi3Status
-fmi3GetShiftDecimal(fmi3Instance instance, const fmi3ValueReference valueReferences[],
-    size_t nValueReferences, fmi3Float64 shifts[])
-{
-  NOT_IMPLEMENTED;
-}
-
-fmi3Status
-fmi3GetShiftFraction(fmi3Instance instance, const fmi3ValueReference valueReferences[],
-    size_t nValueReferences, fmi3UInt64 shiftCounters[], fmi3UInt64 resolutions[])
-{
-  NOT_IMPLEMENTED;
-}
-
-fmi3Status
-fmi3SetIntervalDecimal(fmi3Instance instance, const fmi3ValueReference valueReferences[],
-    size_t nValueReferences, const fmi3Float64 intervals[])
-{
-  NOT_IMPLEMENTED;
-}
-
-fmi3Status
-fmi3SetIntervalFraction(fmi3Instance instance, const fmi3ValueReference valueReferences[],
-    size_t nValueReferences, const fmi3UInt64 intervalCounters[],
-    const fmi3UInt64 resolutions[])
-{
-  NOT_IMPLEMENTED;
-}
-
-fmi3Status
-fmi3SetShiftDecimal(fmi3Instance instance, const fmi3ValueReference valueReferences[],
-    size_t nValueReferences, const fmi3Float64 shifts[])
-{
-  NOT_IMPLEMENTED;
-}
-
-fmi3Status
-fmi3SetShiftFraction(fmi3Instance instance, const fmi3ValueReference valueReferences[],
-    size_t nValueReferences, const fmi3UInt64 shiftCounters[],
-    const fmi3UInt64 resolutions[])
-{
-  NOT_IMPLEMENTED;
 }
 
 fmi3Status

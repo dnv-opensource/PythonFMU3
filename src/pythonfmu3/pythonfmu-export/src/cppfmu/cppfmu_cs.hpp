@@ -68,8 +68,6 @@ public:
     /* Called from fmi3SetXxx()/fmiSetXxx().
      * Throws std::logic_error by default.
      */
-    virtual void EnterEventMode();
-
     virtual void SetFloat64(
         const FMIValueReference vr[],
         std::size_t nvr,
@@ -144,6 +142,40 @@ public:
         FMIBoolean* terminateSimulation,
         FMIBoolean* earlyReturn,
         FMIFloat64& endOfStep) = 0;
+
+    // Event- and Clock-related functions
+    virtual void EnterEventMode();
+    virtual void GetClock(  const FMIValueReference vr[], std::size_t nvr, FMIClock values[]) const;
+    virtual void SetClock(  const FMIValueReference vr[], std::size_t nvr, const FMIClock values[]);
+    virtual void GetIntervalDecimal(
+        const FMIValueReference vr[],
+        std::size_t nvr,
+        FMIFloat64 intervals[],
+        FMIIntervalQualifier qualifiers[]) const;
+    virtual void SetIntervalDecimal(const FMIValueReference vr[], std::size_t nvr, const FMIFloat64 intervals[]);
+    virtual void GetShiftDecimal( const FMIValueReference vr[], std::size_t nvr, FMIFloat64 shifts[]) const;
+    virtual void SetShiftDecimal( const FMIValueReference vr[], std::size_t nvr, const FMIFloat64 shifts[]);
+    virtual void GetIntervalFraction(
+        const FMIValueReference vr[],
+        std::size_t nvr,
+        FMIUInt64 intervalCounters[],
+        FMIUInt64 resolutions[],
+        FMIIntervalQualifier qualifiers[]) const;
+    virtual void SetIntervalFraction(
+        const FMIValueReference vr[],
+        std::size_t nvr,
+        const FMIUInt64 intervalCounters[],
+        const FMIUInt64 resolutions[]);
+    virtual void GetShiftFraction(
+        const FMIValueReference vr[],
+        std::size_t nvr,
+        FMIUInt64 shiftCounters[],
+        FMIUInt64 resolutions[]) const;
+    virtual void SetShiftFraction(
+        const FMIValueReference vr[],
+        std::size_t nvr,
+        const FMIUInt64 shiftCounters[],
+        const FMIUInt64 resolutions[]);
 
     // Model Exchange methods
     virtual void GetContinuousStates(cppfmu::FMIFloat64* continuousStates, std::size_t nStates) const = 0;

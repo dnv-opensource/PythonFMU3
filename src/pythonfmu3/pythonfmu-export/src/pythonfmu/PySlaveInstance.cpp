@@ -262,18 +262,6 @@ void PySlaveInstance::Terminate()
     });
 }
 
-void PySlaveInstance::EnterEventMode()
-{
-    py_safe_run([this](PyGILState_STATE gilState) {
-        auto f = PyObject_CallMethod(pInstance_, "enter_event_mode", nullptr);
-        if (f == nullptr) {
-            handle_py_exception("[enterEventMode] PyObject_CallMethod", gilState);
-        }
-        Py_DECREF(f);
-        clearLogBuffer();
-    });
-}
-
 void PySlaveInstance::SetFloat64(const cppfmu::FMIValueReference* vr, std::size_t nvr, const cppfmu::FMIFloat64* values, std::size_t nValues)
 {
     py_safe_run([this, &vr, nvr, &values, nValues](PyGILState_STATE gilState) {
@@ -816,6 +804,319 @@ void PySlaveInstance::DeSerializeFMUstate(const fmi3Byte bytes[], size_t size, f
         clearLogBuffer();
     });
 }
+
+// ================================
+// Event- and Clock-related methods
+void PySlaveInstance::EnterEventMode()
+{
+    py_safe_run([this](PyGILState_STATE gilState) {
+        auto f = PyObject_CallMethod(pInstance_, "enter_event_mode", nullptr);
+        if (f == nullptr) {
+            handle_py_exception("[enterEventMode] PyObject_CallMethod", gilState);
+        }
+        Py_DECREF(f);
+        clearLogBuffer();
+    });
+}
+
+void PySlaveInstance::GetClock(const cppfmu::FMIValueReference* vr, std::size_t nvr, cppfmu::FMIClock* values) const
+{
+    py_safe_run([this, &vr, nvr, &values](PyGILState_STATE gilState) {
+        PyObject* vrs = PyList_New(nvr);
+        for (int i = 0; i < nvr; i++) {
+            PyList_SetItem(vrs, i, Py_BuildValue("i", vr[i]));
+        }
+        auto refs = PyObject_CallMethod(pInstance_, "get_clock", "O", vrs);
+        Py_DECREF(vrs);
+        if (refs == nullptr) {
+            handle_py_exception("[getClock] PyObject_CallMethod", gilState);
+        }
+
+        for (int i = 0; i < nvr; i++) {
+            PyObject* value = PyList_GetItem(refs, i);
+            values[i] = PyObject_IsTrue(value);
+        }
+        Py_DECREF(refs);
+        clearLogBuffer();
+    });
+}
+void PySlaveInstance::SetClock(const cppfmu::FMIValueReference* vr, std::size_t nvr, const cppfmu::FMIClock* values)
+{
+    py_safe_run([this, &vr, nvr, &values](PyGILState_STATE gilState) {
+        PyObject* vrs = PyList_New(nvr);
+        PyObject* refs = PyList_New(nvr);
+        for (int i = 0; i < nvr; i++) {
+            PyList_SetItem(vrs, i, Py_BuildValue("i", vr[i]));
+        }
+        for (int i = 0; i < nvr; i++) {
+            PyList_SetItem(refs, i, PyBool_FromLong(values[i]));
+        }
+
+        auto f = PyObject_CallMethod(pInstance_, "set_clock", "(OO)", vrs, refs);
+        Py_DECREF(vrs);
+        Py_DECREF(refs);
+        if (f == nullptr) {
+            handle_py_exception("[setClock] PyObject_CallMethod", gilState);
+        }
+        Py_DECREF(f);
+        clearLogBuffer();
+    });
+}
+void PySlaveInstance::GetIntervalDecimal(
+    const cppfmu::FMIValueReference* vr,
+    std::size_t nvr,
+    cppfmu::FMIFloat64* intervals,
+    cppfmu::FMIIntervalQualifier* qualifiers) const
+{
+    py_safe_run([this, &vr, nvr, &intervals, &qualifiers](PyGILState_STATE gilState) {
+        PyObject* vrs = PyList_New(nvr);
+        for (int i = 0; i < nvr; i++) {
+            PyList_SetItem(vrs, i, Py_BuildValue("i", vr[i]));
+        }
+
+        auto refs = PyObject_CallMethod(pInstance_, "get_interval_decimal", "O", vrs);
+        Py_DECREF(vrs);
+        if (refs == nullptr) {
+            handle_py_exception("[getIntervalDecimal] PyObject_CallMethod", gilState);
+        }
+        if (PySequence_Size(refs)!=2) {
+            handle_py_exception("[getIntervalDecimal] !=2 return objects", gilState);
+        }
+        PyObject* ref0 = PyList_GetItem(refs, 0);
+        for (int i = 0; i < nvr; i++) {
+            PyObject* value = PyList_GetItem(ref0, i);
+            intervals[i] = PyFloat_AsDouble(value);
+        }
+        Py_DECREF(ref0);
+        PyObject* ref1 = PyList_GetItem(refs, 1);
+        for (int i = 0; i < nvr; i++) {
+            PyObject* value = PyList_GetItem(ref1, i);
+            if (value && PyLong_Check(value))
+                qualifiers[i] = static_cast<cppfmu::FMIIntervalQualifier>(PyLong_AsLong(value));
+            else
+                handle_py_exception("[getIntervalDecimal] invalid interval qualifier", gilState);
+        }
+        Py_DECREF(ref1);
+        Py_DECREF(refs);
+        clearLogBuffer();
+    });
+}
+
+void PySlaveInstance::SetIntervalDecimal(const cppfmu::FMIValueReference* vr, std::size_t nvr, const cppfmu::FMIFloat64* intervals)
+{
+    py_safe_run([this, &vr, nvr, &intervals](PyGILState_STATE gilState) {
+        PyObject* vrs = PyList_New(nvr);
+        PyObject* refs = PyList_New(nvr);
+        for (int i = 0; i < nvr; i++) {
+            PyList_SetItem(vrs, i, Py_BuildValue("i", vr[i]));
+        }
+        for (int i = 0; i < nvr; i++) {
+            PyList_SetItem(refs, i, Py_BuildValue("d", intervals[i]));
+        }
+
+        auto f = PyObject_CallMethod(pInstance_, "set_interval_decimal", "(OO)", vrs, refs);
+        Py_DECREF(vrs);
+        Py_DECREF(refs);
+        if (f == nullptr) {
+            handle_py_exception("[setFloat64] PyObject_CallMethod", gilState);
+        }
+        Py_DECREF(f);
+        clearLogBuffer();
+    });
+}
+void PySlaveInstance::GetShiftDecimal(const cppfmu::FMIValueReference* vr, std::size_t nvr, cppfmu::FMIFloat64* shifts) const
+{
+    py_safe_run([this, &vr, nvr, &shifts](PyGILState_STATE gilState) {
+        PyObject* vrs = PyList_New(nvr);
+        for (int i = 0; i < nvr; i++) {
+            PyList_SetItem(vrs, i, Py_BuildValue("i", vr[i]));
+        }
+        auto refs = PyObject_CallMethod(pInstance_, "get_shift_decimal", "O", vrs);
+        Py_DECREF(vrs);
+        if (refs == nullptr) {
+            handle_py_exception("[getShiftDecimal] PyObject_CallMethod", gilState);
+        }
+
+        for (int i = 0; i < nvr; i++) {
+            PyObject* value = PyList_GetItem(refs, i);
+            shifts[i] = PyFloat_AsDouble(value);
+        }
+        Py_DECREF(refs);
+        clearLogBuffer();
+    });
+}
+
+void PySlaveInstance::SetShiftDecimal(const cppfmu::FMIValueReference* vr, std::size_t nvr, const cppfmu::FMIFloat64* shifts)
+{
+    py_safe_run([this, &vr, nvr, &shifts](PyGILState_STATE gilState) {
+        PyObject* vrs = PyList_New(nvr);
+        PyObject* refs = PyList_New(nvr);
+        for (int i = 0; i < nvr; i++) {
+            PyList_SetItem(vrs, i, Py_BuildValue("i", vr[i]));
+        }
+        for (int i = 0; i < nvr; i++) {
+            PyList_SetItem(refs, i, Py_BuildValue("d", shifts[i]));
+        }
+
+        auto f = PyObject_CallMethod(pInstance_, "set_shift_decimal", "(OO)", vrs, refs);
+        Py_DECREF(vrs);
+        Py_DECREF(refs);
+        if (f == nullptr) {
+            handle_py_exception("[setShiftDecimal] PyObject_CallMethod", gilState);
+        }
+        Py_DECREF(f);
+        clearLogBuffer();
+    });
+}
+
+void PySlaveInstance::GetIntervalFraction(
+    const cppfmu::FMIValueReference* vr,
+    std::size_t nvr,
+    cppfmu::FMIUInt64* intervalCounters,
+    cppfmu::FMIUInt64* resolutions,
+    cppfmu::FMIIntervalQualifier* qualifiers) const
+{
+    py_safe_run([this, &vr, nvr, &intervalCounters, &resolutions, &qualifiers](PyGILState_STATE gilState) {
+        PyObject* vrs = PyList_New(nvr);
+        for (int i = 0; i < nvr; i++) {
+            PyList_SetItem(vrs, i, Py_BuildValue("i", vr[i]));
+        }
+
+        auto refs = PyObject_CallMethod(pInstance_, "get_interval_fraction", "O", vrs);
+        Py_DECREF(vrs);
+        if (refs == nullptr) {
+            handle_py_exception("[getIntervalFraction] PyObject_CallMethod", gilState);
+        }
+        if (PySequence_Size(refs)!=3) {
+            handle_py_exception("[getIntervalFraction] !=3 return objects", gilState);
+        }
+        PyObject* ref0 = PyList_New(nvr);
+        ref0 = PyList_GetItem( refs, 0);
+        //auto ref0 = PyList_GetItem(refs, 0);
+        for (int i = 0; i < nvr; i++) {
+            PyObject* value = PyList_GetItem(ref0, i);
+            intervalCounters[i] = static_cast<cppfmu::FMIUInt64>(PyLong_AsUnsignedLongLong(value));
+        }
+        Py_DECREF(ref0);
+        auto ref1 = PyList_GetItem(refs, 1);
+        for (int i = 0; i < nvr; i++) {
+            PyObject* value = PyList_GetItem(ref1, i);
+            resolutions[i] = static_cast<cppfmu::FMIUInt64>(PyLong_AsUnsignedLongLong(value));
+        }
+        Py_DECREF(ref1);
+        auto ref2 = PyList_GetItem(refs, 2);
+        for (int i = 0; i < nvr; i++) {
+            PyObject* value = PyList_GetItem(ref2, i);
+            qualifiers[i] = static_cast<cppfmu::FMIIntervalQualifier>(PyLong_AsLong(value));
+        }
+        Py_DECREF(ref2);
+        Py_DECREF(refs);
+        clearLogBuffer();
+    });
+}
+
+void PySlaveInstance::SetIntervalFraction(
+    const cppfmu::FMIValueReference* vr,
+    std::size_t nvr,
+    const cppfmu::FMIUInt64* intervalCounters,
+    const cppfmu::FMIUInt64* resolutions)
+{
+    py_safe_run([this, &vr, nvr, &intervalCounters, &resolutions](PyGILState_STATE gilState) {
+        PyObject* vrs = PyList_New(nvr);
+        PyObject* refs1 = PyList_New(nvr);
+        PyObject* refs2 = PyList_New(nvr);
+        for (int i = 0; i < nvr; i++) {
+            PyList_SetItem(vrs, i, Py_BuildValue("i", vr[i]));
+        }
+        for (int i = 0; i < nvr; i++) {
+            PyList_SetItem(refs1, i, Py_BuildValue("K", intervalCounters[i]));
+        }
+        for (int i = 0; i < nvr; i++) {
+            PyList_SetItem(refs2, i, Py_BuildValue("K", resolutions[i]));
+        }
+
+        auto f = PyObject_CallMethod(pInstance_, "set_interval_fraction", "(OO)", vrs, refs1, refs2);
+        Py_DECREF(vrs);
+        Py_DECREF(refs1);
+        Py_DECREF(refs2);
+        if (f == nullptr) {
+            handle_py_exception("[setIntervalFraction] PyObject_CallMethod", gilState);
+        }
+        Py_DECREF(f);
+        clearLogBuffer();
+    });
+}
+
+void PySlaveInstance::GetShiftFraction(
+    const cppfmu::FMIValueReference* vr,
+    std::size_t nvr,
+    cppfmu::FMIUInt64* shiftCounters,
+    cppfmu::FMIUInt64* resolutions) const
+{
+    py_safe_run([this, &vr, nvr, &shiftCounters, &resolutions](PyGILState_STATE gilState) {
+        PyObject* vrs = PyList_New(nvr);
+        for (int i = 0; i < nvr; i++) {
+            PyList_SetItem(vrs, i, Py_BuildValue("i", vr[i]));
+        }
+        auto refs = PyObject_CallMethod(pInstance_, "get_shift_fraction", "O", vrs);
+        Py_DECREF(vrs);
+        if (refs == nullptr) {
+            handle_py_exception("[getShiftFraction] PyObject_CallMethod", gilState);
+        }
+        if (PySequence_Size(refs)!=2) {
+            handle_py_exception("[getShiftFraction] !=2 return objects", gilState);
+        }
+        auto ref0 = PyList_GetItem(refs, 0);
+        for (int i = 0; i < nvr; i++) {
+            PyObject* value = PyList_GetItem(ref0, i);
+            shiftCounters[i] = static_cast<cppfmu::FMIUInt64>(PyLong_AsUnsignedLongLong(value));
+        }
+        Py_DECREF(ref0);
+        auto ref1 = PyList_GetItem(refs, 1);
+        for (int i = 0; i < nvr; i++) {
+            PyObject* value = PyList_GetItem(ref1, i);
+            resolutions[i] = static_cast<cppfmu::FMIUInt64>(PyLong_AsUnsignedLongLong(value));
+        }
+        Py_DECREF(ref1);
+        Py_DECREF(refs);
+        clearLogBuffer();
+    });
+}
+
+void PySlaveInstance::SetShiftFraction(
+    const cppfmu::FMIValueReference* vr,
+    std::size_t nvr,
+    const cppfmu::FMIUInt64* shiftCounters,
+    const cppfmu::FMIUInt64* resolutions)
+{
+    py_safe_run([this, &vr, nvr, &shiftCounters, &resolutions](PyGILState_STATE gilState) {
+        PyObject* vrs = PyList_New(nvr);
+        PyObject* refs1 = PyList_New(nvr);
+        PyObject* refs2 = PyList_New(nvr);
+        for (int i = 0; i < nvr; i++) {
+            PyList_SetItem(vrs, i, Py_BuildValue("i", vr[i]));
+        }
+        for (int i = 0; i < nvr; i++) {
+            PyList_SetItem(refs1, i, Py_BuildValue("K", shiftCounters[i]));
+        }
+        for (int i = 0; i < nvr; i++) {
+            PyList_SetItem(refs2, i, Py_BuildValue("K", resolutions[i]));
+        }
+
+        auto f = PyObject_CallMethod(pInstance_, "set_shift_fraction", "(OO)", vrs, refs1, refs2);
+        Py_DECREF(vrs);
+        Py_DECREF(refs1);
+        Py_DECREF(refs2);
+        if (f == nullptr) {
+            handle_py_exception("[setShiftFraction] PyObject_CallMethod", gilState);
+        }
+        Py_DECREF(f);
+        clearLogBuffer();
+    });
+}
+
+// ==============
+// Helper methods
 
 void PySlaveInstance::handle_py_exception(const std::string& what, PyGILState_STATE gilState) const
 {
