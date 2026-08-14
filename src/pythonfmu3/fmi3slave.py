@@ -44,12 +44,19 @@ FMI3_MODEL_OPTIONS_MX: list[ModelOptions] = [
     ModelOptions("needsCompletedIntegratorStep", False, "needs-completed-step"),
 ]
 
-
 class Fmi3StepResult(NamedTuple):
     status: Fmi3Status = Fmi3Status.ok
     eventHandlingNeeded: bool = False
     terminateSimulation: bool = False
     earlyReturn: bool = False
+
+class Fmi3UpdateDiscreteStatesResult(NamedTuple):
+    discreteStatesNeedUpdate: bool = False
+    terminateSimulation: bool = False
+    nominalContinuousStatesChanged: bool = False # (only ME)
+    valuesOfContinuousStatesChanged: bool = False
+    nextEventTimeDefined: bool = False
+    nextEventTime: Float64 = 0.0
 
 
 class Fmi3SlaveBase:
