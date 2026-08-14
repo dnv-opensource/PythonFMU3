@@ -819,6 +819,18 @@ void PySlaveInstance::EnterEventMode()
     });
 }
 
+void PySlaveInstance::EnterStepMode()
+{
+    py_safe_run([this](PyGILState_STATE gilState) {
+        auto f = PyObject_CallMethod(pInstance_, "enter_step_mode", nullptr);
+        if (f == nullptr) {
+            handle_py_exception("[enterStepMode] PyObject_CallMethod", gilState);
+        }
+        Py_DECREF(f);
+        clearLogBuffer();
+    });
+}
+
 void PySlaveInstance::GetClock(const cppfmu::FMIValueReference* vr, std::size_t nvr, cppfmu::FMIClock* values) const
 {
     py_safe_run([this, &vr, nvr, &values](PyGILState_STATE gilState) {

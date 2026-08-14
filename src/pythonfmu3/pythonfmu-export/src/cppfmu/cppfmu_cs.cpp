@@ -193,6 +193,21 @@ void SlaveInstance::EnterEventMode()
 {
     // Do nothing
 }
+void SlaveInstance::EnterStepMode()
+{
+    // Do nothing
+}
+void SlaveInstance::UpdateDiscreteStates(
+        cppfmu::FMIBoolean* discreteStatesNeedUpdate,
+        cppfmu::FMIBoolean* terminateSimulation,
+        cppfmu::FMIBoolean* nominalContinuousStatesChanged,
+        cppfmu::FMIBoolean* valuesOfContinuousStatesChanged,
+        cppfmu::FMIBoolean* nextEventTimeDefined,
+        cppfmu::FMIFloat64* nextEventTime)
+{
+    // Do nothing
+}
+
 void SlaveInstance::GetClock(  const FMIValueReference /*vr*/[], std::size_t nvr, FMIClock /*values*/[]) const
 {
     if (nvr != 0) {

@@ -145,6 +145,7 @@ public:
 
     // Event- and Clock-related functions
     virtual void EnterEventMode();
+    virtual void EnterStepMode();
     virtual void GetClock(  const FMIValueReference vr[], std::size_t nvr, FMIClock values[]) const;
     virtual void SetClock(  const FMIValueReference vr[], std::size_t nvr, const FMIClock values[]);
     virtual void GetIntervalDecimal(

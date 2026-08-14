@@ -53,6 +53,7 @@ public:
 
     // Event- and Clock-related methods
     void EnterEventMode() override;
+    void EnterStepMode() override;
     void GetClock(const cppfmu::FMIValueReference* vr, std::size_t nvr, cppfmu::FMIClock* values) const override;
     void SetClock(const cppfmu::FMIValueReference* vr, std::size_t nvr, const cppfmu::FMIClock* values) override;
     void GetIntervalDecimal(
