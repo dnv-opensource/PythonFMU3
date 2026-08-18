@@ -4,6 +4,7 @@ import ctypes
 import datetime
 import json
 from collections import OrderedDict, namedtuple
+from dataclasses import dataclass, fields
 from typing import Any, NamedTuple
 from uuid import uuid1
 from xml.etree.ElementTree import Element, SubElement
@@ -27,28 +28,90 @@ from .variables import (
     UInt64,
 )
 
-ModelOptions = namedtuple("ModelOptions", ["name", "value", "cli"])
+#Note: all Bool options are false by default and the name expresses the option as True.
+#      The cli uses therefor the original name to add the option as implicit True (non-default)
+#      other options are added with their (non-default) numbers
+@dataclass(kw_only=True, frozen=True, slots=True)
+class Fmi3ModelOptionsCommon:
+    """Model options common for Co-Simulation and Model Exchange."""
+    needsExecutionTool: bool = False
+    canBeInstantiatedOnlyOncePerProcess: bool = False
+    canGetAndSetFMUState: bool = False
+    canSerializeFMUState: bool = False
+    providesDirectionalDerivatives: bool = False
+    providesAdjointDerivatives: bool = False
+    providesPerElementDependencies: bool = False
+    providesEvaluateDiscreteStates: bool = False
+    
+    def to_dict(self, *, w_default:bool= True, w_none: bool = True):
+        """A special version of 'asdict', which also allows for choice what to include.
+        Note: self.do_dict() == asdict(self) if the default value is None.
+    
+        Args:
+            w_defaults: include also the elements with default value
+            w_none: include also elements with a 'None' value
+        """
+        dct: dict[str, bool|int|float] = {}
+        for _f in fields(self):
+            value = getattr(self,_f.name)
+            if ((value is not None and value != _f.default) or
+                (value is not None and value == _f.default and w_default) or
+                (value is None and value == _f.default and w_default and w_none) or
+                (value is None and value != _f.default and w_none)
+                ):
+                dct.update({_f.name : value})
+        return dct  
 
-FMI3_MODEL_OPTIONS_COMMON: list[ModelOptions] = [
-    ModelOptions("needsExecutionTool", True, "no-external-tool"),
-    ModelOptions("canBeInstantiatedOnlyOncePerProcess", False, "only-one-per-process"),
-    ModelOptions("canGetAndSetFMUState", False, "handle-state"),
-    ModelOptions("canSerializeFMUState", False, "serialize-state"),
-]
+@dataclass(kw_only=True, frozen=True, slots=True)
+class Fmi3ModelOptionsCS(Fmi3ModelOptionsCommon):
+    """Model options for Co-Simulation."""
+    canHandleVariableCommunicationStepSize: bool = False    
+    fixedInternalStepSize: float|None = None
+    maxOutputDerivativeOrder: int = 0 # uInt
+    recommendedIntermediateInputSmoothness: int = 0
+    providesIntermediateUpdate: bool = False
+    mightReturnEarlyFromDoStep: bool = False
+    canReturnEarlyAfterIntermediateUpdate: bool = False
+    hasEventMode: bool = False
 
-FMI3_MODEL_OPTIONS_COSIM: list[ModelOptions] = [
-    ModelOptions("canHandleVariableCommunicationStepSize", True, "no-variable-step"),
-]
-
-FMI3_MODEL_OPTIONS_MX: list[ModelOptions] = [
-    ModelOptions("needsCompletedIntegratorStep", False, "needs-completed-step"),
-]
+@dataclass(kw_only=True, frozen=True, slots=True)
+class Fmi3ModelOptionsME(Fmi3ModelOptionsCommon):
+    """Model options for Model Exchange."""
+    needsCompletedIntegratorStep: bool = False
+    
+    
+#     
+# FMI3_MODEL_OPTIONS_COMMON: list[ModelOptions] = [
+#     ModelOptions("needsExecutionTool", False),
+#     ModelOptions("canBeInstantiatedOnlyOncePerProcess", False),
+#     ModelOptions("canGetAndSetFMUState", False),
+#     ModelOptions("canSerializeFMUState", False),
+#     ModelOptions("providesDirectionalDerivatives", False),
+#     ModelOptions("providesAdjointDerivatives", False),
+#     ModelOptions("providesPerElementDependencies", False),
+#     ModelOptions("providesEvaluateDiscreteStates", False),
+# ]
+# 
+# FMI3_MODEL_OPTIONS_CS: list[ModelOptions] = [
+#     ModelOptions("canHandleVariableCommunicationStepSize", True),    
+#     ModelOptions("fixedInternalStepSize", None), # double
+#     ModelOptions("maxOutputDerivativeOrder", 0), # uInt
+#     ModelOptions("recommendedIntermediateInputSmoothness", 0), # int
+#     ModelOptions("providesIntermediateUpdate", False),
+#     ModelOptions("mightReturnEarlyFromDoStep", False),
+#     ModelOptions("canReturnEarlyAfterIntermediateUpdate", False),
+#     ModelOptions("hasEventMode", False),
+# ]
+# 
+# FMI3_MODEL_OPTIONS_ME: list[ModelOptions] = [
+#     ModelOptions("needsCompletedIntegratorStep", False),
+# ]
 
 class Fmi3StepResult(NamedTuple):
-    status: Fmi3Status = Fmi3Status.ok
     eventHandlingNeeded: bool = False
     terminateSimulation: bool = False
     earlyReturn: bool = False
+    lastSuccessfullTime: Float64 = 0.0
 
 class Fmi3UpdateDiscreteStatesResult(NamedTuple):
     discreteStatesNeedUpdate: bool = False
@@ -77,6 +140,8 @@ class Fmi3SlaveBase:
         self.instance_name = kwargs["instance_name"]
         self.resources = kwargs.get("resources", None)
         self.visible = kwargs.get("visible", False)
+        self.model_options_cs = kwargs.get("model_options_cs", Fmi3ModelOptionsCS())
+        self.model_options_me = kwargs.get("model_options_me", Fmi3ModelOptionsME())
         self.log_queue = []
 
         self.guid = uuid1()
@@ -100,7 +165,6 @@ class Fmi3SlaveBase:
         Returns:
             (xml.etree.TreeElement.Element) XML description of the FMU
         """
-
         t = datetime.datetime.now(datetime.UTC)
         date_str = t.isoformat(timespec="seconds")
 
@@ -125,20 +189,20 @@ class Fmi3SlaveBase:
 
         root = Element("fmiModelDescription", attrib)
 
-        options = dict()
-        for option in FMI3_MODEL_OPTIONS_COMMON:
-            value = model_options.get(option.name, option.value)
-            options[option.name] = str(value).lower()
+        options_cs = {"modelIdentifier": self.modelName}
+        for name, default in Fmi3ModelOptionsCS().to_dict().items():
+            if name in model_options:
+                value = model_options.get(name, default)
+                if  value is not None:
+                    options_cs[name] = str(value).lower()
+        options_cs["modelIdentifier"] = self.modelName
 
-        options["modelIdentifier"] = self.modelName
-
-        options_cs = options.copy()
-        for option in FMI3_MODEL_OPTIONS_COSIM:
-            options_cs[option.name] = str(value).lower()
-
-        options_me = options.copy()
-        for option in FMI3_MODEL_OPTIONS_MX:
-            options_me[option.name] = str(value).lower()
+        options_me = {"modelIdentifier": self.modelName}
+        for name, default in Fmi3ModelOptionsME().to_dict().items():
+            if name in model_options:
+                value = model_options.get(name, default)
+                if  value is not None:
+                    options_me[name] = str(value).lower()
 
         # check if we have cosim mixin or model exchange mixin
         if isinstance(self, ModelExchange):

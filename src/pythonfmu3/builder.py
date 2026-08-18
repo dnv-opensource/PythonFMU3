@@ -15,12 +15,8 @@ from typing import Union
 from xml.dom.minidom import parseString
 from xml.etree.ElementTree import Element, tostring
 
-from .fmi3slave import (
-    FMI3_MODEL_OPTIONS_COMMON,
-    FMI3_MODEL_OPTIONS_COSIM,
-    FMI3_MODEL_OPTIONS_MX,
-    Fmi3SlaveBase,
-)
+from pythonfmu3.fmi3slave import Fmi3ModelOptionsCS, Fmi3ModelOptionsME, Fmi3SlaveBase
+
 from .osutil import get_lib_extension, get_platform
 
 FilePath = Union[str, Path]
@@ -59,6 +55,7 @@ def get_model_description(filepath: Path, module_name: str) -> tuple[str, Elemen
         instance = getattr(fmu_interface, class_name)(
             instance_name="dummyInstance", resources=str(filepath.parent)
         )
+        model_options_cs = instance.model_options_cs.to_dict()
     finally:
         sys.path.remove(str(filepath.parent))  # remove inserted temporary path
 
@@ -67,7 +64,7 @@ def get_model_description(filepath: Path, module_name: str) -> tuple[str, Elemen
             f"The provided class '{class_name}' does not inherit from {Fmi3SlaveBase.__qualname__}"
         )
     # Produce the xml
-    return instance.modelName, instance.to_xml()
+    return instance.modelName, instance.to_xml(model_options_cs)
 
 
 class FmuBuilder:
@@ -143,26 +140,21 @@ class FmuBuilder:
                     else:
                         shutil.copy2(file_, temp_dir)
 
-            model_identifier, xml = get_model_description(
-                temp_dir.absolute() / script_file.name, module_name
-            )
+            model_identifier, xml = get_model_description(temp_dir.absolute() / script_file.name, module_name)
 
             dest_file = dest / f"{model_identifier}.fmu"
 
             type_node = xml.find("CoSimulation")
-            option_names = [opt.name for opt in FMI3_MODEL_OPTIONS_COMMON]
-            cosim_option_names = option_names.copy()
-            cosim_option_names.extend(opt.name for opt in FMI3_MODEL_OPTIONS_COSIM)
+            cs_option_names = list(Fmi3ModelOptionsCS().to_dict().keys())
             if type_node is not None:
-                for option, value in options.items():
-                    if option in cosim_option_names:
+                for option, value in options['options'].items():
+                    if option in cs_option_names:
                         type_node.set(option, str(value).lower())
 
             type_node = xml.find("ModelExchange")
-            mx_option_names = option_names.copy()
-            mx_option_names.extend(opt.name for opt in FMI3_MODEL_OPTIONS_MX)
+            me_option_names = list(Fmi3ModelOptionsME().to_dict().keys())
             if type_node is not None:
-                for option, value in options.items():
+                for option, value in options['options'].items():
                     if option in mx_option_names:
                         type_node.set(option, str(value).lower())
 
@@ -266,32 +258,35 @@ def create_command_parser(parser: argparse.ArgumentParser):
         default=None,
     )
 
-    for option in FMI3_MODEL_OPTIONS_COMMON:
-        action = "store_false" if option.value else "store_true"
-        parser.add_argument(
-            f"--{option.cli}",
-            dest=option.name,
-            help=f"If given, {option.name}={action[6:]}",
-            action=action,
-        )
+    # Boolean options are added using their FMI name, making them implicitly True.
+    # For other options their (non-default) number is added after a space.
+    for name, default in Fmi3ModelOptionsCS().to_dict().items():
+        if default in (True,False):
+            parser.add_argument(
+                f"--{name}",
+                dest=name,
+                help=f"If given, {name}={not default}",
+                action="store_true"
+            )
+        elif name in ("fixedInternalStepSize", "maxOutputDerivativeOrder", "recommendedIntermediateInputSmoothness"):
+            parser.add_argument(f"--{name}", dest=name,
+                                help=f"If given, {name}= number",
+                                )
+        else:
+            raise ValueError(f"Something wrong with option {name}, default:{default}") from None
 
-    for option in FMI3_MODEL_OPTIONS_COSIM:
-        action = "store_false" if option.value else "store_true"
-        parser.add_argument(
-            f"--{option.cli}",
-            dest=option.name,
-            help=f"If given, {option.name}={action[6:]}",
-            action=action,
-        )
-
-    for option in FMI3_MODEL_OPTIONS_MX:
-        action = "store_false" if option.value else "store_true"
-        parser.add_argument(
-            f"--{option.cli}",
-            dest=option.name,
-            help=f"If given, {option.name}={action[6:]}",
-            action=action,
-        )
+    cs_keys = list(Fmi3ModelOptionsCS().to_dict().keys())
+    for name, default in Fmi3ModelOptionsME().to_dict().items():
+        if name not in cs_keys:
+            if default in (True,False):
+                parser.add_argument(
+                    f"--{name}",
+                    dest=name,
+                    help=f"If given, {name}={not default}",
+                    action="store_true"
+                )
+            else:
+                raise ValueError(f"Something wrong with option {name}, default:{default}") from None
 
     parser.add_argument(
         "project_files",

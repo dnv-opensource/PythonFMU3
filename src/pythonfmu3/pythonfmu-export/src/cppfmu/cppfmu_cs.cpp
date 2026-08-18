@@ -188,6 +188,18 @@ void SlaveInstance::GetString(
     }
 }
 
+void SlaveInstance::DoStep(
+    FMIFloat64 currentCommunicationPoint,
+    FMIFloat64 communicationStepSize,
+    FMIBoolean noSetFMUStatePriorToCurrentPoint,
+    FMIBoolean* eventHandlingNeeded,
+    FMIBoolean* terminateSimulation,
+    FMIBoolean* earlyReturn,
+    FMIFloat64* lastSuccessfullTime)
+{
+    // Do nothing
+}
+
 // Event- and Clock-related functions
 void SlaveInstance::EnterEventMode()
 {
@@ -197,7 +209,7 @@ void SlaveInstance::EnterStepMode()
 {
     // Do nothing
 }
-void SlaveInstance::UpdateDiscreteStates(
+/*void SlaveInstance::UpdateDiscreteStates(
         cppfmu::FMIBoolean* discreteStatesNeedUpdate,
         cppfmu::FMIBoolean* terminateSimulation,
         cppfmu::FMIBoolean* nominalContinuousStatesChanged,
@@ -207,7 +219,7 @@ void SlaveInstance::UpdateDiscreteStates(
 {
     // Do nothing
 }
-
+*/
 void SlaveInstance::GetClock(  const FMIValueReference /*vr*/[], std::size_t nvr, FMIClock /*values*/[]) const
 {
     if (nvr != 0) {

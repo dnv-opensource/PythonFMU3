@@ -883,7 +883,21 @@ fmi3Status fmi3DoStep(
     fmi3Boolean* eventHandlingNeeded ,
     fmi3Boolean* terminateSimulation,
     fmi3Boolean* earlyReturn,
-    fmi3Float64* lastSuccessfulTime)
+    fmi3Float64* lastSuccessfullTime)
+{
+    const auto component = reinterpret_cast<Component*>(c);
+    try {
+        component->slave->DoStep(
+            currentCommunicationPoint,
+            communicationStepSize,
+            noSetFmuStatePriorToCurrentPoint,
+            eventHandlingNeeded,
+            terminateSimulation,
+            earlyReturn,
+            lastSuccessfullTime);
+        return fmi3OK;
+/* Changed that back to the original definition leaving the logic to the components
+   fmi3Float64* lastSuccessfulTime)
 {
     const auto component = reinterpret_cast<Component*>(c);
     try {
@@ -903,7 +917,7 @@ fmi3Status fmi3DoStep(
         } else {
             *lastSuccessfulTime = endTime;
             return status;
-        }
+        }*/
     } catch (const cppfmu::FatalError& e) {
         component->logger.Log(fmi3Fatal, "", e.what());
         return fmi3Fatal;

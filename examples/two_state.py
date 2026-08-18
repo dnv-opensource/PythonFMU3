@@ -9,8 +9,12 @@ import numpy as np
 from collections import namedtuple
 from pythonfmu3 import Fmi3Slave
 from pythonfmu3.enums import Fmi3IntervalVariability, Fmi3Causality, Fmi3Status
-from pythonfmu3.variables import Float64, Int32, Clock
-from pythonfmu3.fmi3slave import Fmi3StepResult, Fmi3UpdateDiscreteStatesResult
+from pythonfmu3.variables import Boolean, Float64, Int32, Clock
+from pythonfmu3.fmi3slave import (
+    Fmi3StepResult,
+    Fmi3UpdateDiscreteStatesResult,
+    Fmi3ModelOptionsCS,
+    )
 
 EPS = 1e-14
 
@@ -18,15 +22,21 @@ class TwoState(Fmi3Slave):
     """Two-state discrete event implementation"""
 
     def __init__(self, **kwargs):
+        kwargs.update({'model_options_cs' : Fmi3ModelOptionsCS(canHandleVariableCommunicationStepSize = True,
+                                                               mightReturnEarlyFromDoStep = True,
+                                                               hasEventMode = True),
+                       'model_options_me' : None,
+                       })
         super().__init__(**kwargs)
 
         self.author = "Siegfried Eisinger"
         self.description = "Two-state discrete event system."
         
         # Parameters
-        self.mttf = 1.0  # Mean time to failure (ttf exponentially distributed)
+        self.mttf = 0.1  # Mean time to failure (ttf exponentially distributed)
         self.mttr = 0.01 # Mean time to repair (ttr constant)
         self.seed = 1
+        self.deterministic = False
 
         # Inputs
 
@@ -44,6 +54,7 @@ class TwoState(Fmi3Slave):
         self.register_variable(Float64("mttf", causality=Fmi3Causality.parameter, start=1.0))
         self.register_variable(Float64("mttr", causality=Fmi3Causality.parameter, start=0.01))
         self.register_variable(Int32("seed", causality=Fmi3Causality.parameter, start=1))
+        self.register_variable(Boolean("deterministic", causality=Fmi3Causality.parameter, start=False))
         self.register_variable(Int32("state", causality=Fmi3Causality.output))
         self.register_variable(Clock("next_interval",
                                      interval_variability=Fmi3IntervalVariability.triggered,
@@ -54,27 +65,38 @@ class TwoState(Fmi3Slave):
         if self.state==0:
             return self.mttr
         elif self.state==1:
-            return self.rng.exponential(self.mttf)
+            if self.deterministic:
+                return self.mttf
+            else:
+                return self.rng.exponential(self.mttf)
         else:
             raise ValueError(f"Unallowed state {self.state}") from None
             
     def enter_event_mode(self):
         """Signal from orchestrator that an event has occured."""
-        print(f"EnterEventMode @{self.time}")
+        # print(f"EnterEventMode @{self.time}")
+        pass
     
     def enter_step_mode(self):
         """Signal from orchestrator that events are dealt with and switching back to step mode."""
-        print(f"EnterStepMode @{self.time}")
+        # print(f"EnterStepMode @{self.time}")
+        pass
 
     def exit_initialization_mode(self):
-        print(f"Initialization finished")
+        # print(f"Initialization finished")
+        pass
 
-    def do_step(self, current_time, step_size):
+    def do_step(self, current_time:float, step_size:float, noSetFmuStatePriorToCurrentPoint:bool=True):
         self.time = current_time + step_size
         self.histogram.append( (current_time, self.state))
-
-        return Fmi3StepResult(status=Fmi3Status.ok,
-                              eventHandlingNeeded=(self.time>self.next_time-EPS))
+        if self.time >= self.next_time-EPS:
+            ret = Fmi3StepResult(eventHandlingNeeded = True,
+                                 lastSuccessfullTime = self.next_time)
+            # print(f"DoStep@{current_time}: {ret}")
+        else:
+            ret = Fmi3StepResult(eventHandlingNeeded = False,
+                                 lastSuccessfullTime = self.time)
+        return ret
     
     def update_discrete_states(self):
         """Call by Orchestrator to update discrete states in super-dense time instant,
@@ -98,16 +120,7 @@ class TwoState(Fmi3Slave):
         self.state = 1 if self.time == 0.0 else 1 - self.state
         self.next_interval = self.get_next_interval()
         self.next_time = self.time + self.next_interval
-        print(f"UpdateDiscreteStates @ {self.time} => {self.state}, {self.next_time}")
-            
-# dict does not work
-#         return ( False, # discreteStatesNeedUpdate
-#                  False, # terminateSimulation
-#                  False, # nominalContinuousStatesChanged (only ME)
-#                  False, # valuesOfContinuousStatesChanged
-#                  True, # nextEventTimeDefined,
-#                  self.next_interval, #nextEventTime
-#                  )
+        # print(f"UpdateDiscreteStates @ {self.time} => {self.state}, {self.next_time}")            
         return Fmi3UpdateDiscreteStatesResult( nextEventTimeDefined=True, nextEventTime=self.next_interval)
 
 

@@ -12,6 +12,7 @@
 #include <regex>
 #include <sstream>
 #include <utility>
+#include <iostream>
 
 namespace pythonfmu
 {
@@ -201,21 +202,27 @@ void PySlaveInstance::ExitInitializationMode()
     });
 }
 
-cppfmu::FMIStatus PySlaveInstance::DoStep(cppfmu::FMIFloat64 currentTime,
+//cppfmu::FMIStatus PySlaveInstance::DoStep(
+void PySlaveInstance::DoStep(
+    cppfmu::FMIFloat64 currentTime,
     cppfmu::FMIFloat64 stepSize,
     cppfmu::FMIBoolean noSetFmuStatePriorToCurrentPoint,
     cppfmu::FMIBoolean* eventHandlingNeeded,
     cppfmu::FMIBoolean* terminateSimulation,
     cppfmu::FMIBoolean* earlyReturn,
-    cppfmu::FMIFloat64& endOfStep)
+    cppfmu::FMIFloat64* lastSuccessfullTime)
 {
+    /* Changed back to the original definition of DoStep
     cppfmu::FMIStatus fmuStatus = cppfmu::FMIOK;
-    py_safe_run([this, &fmuStatus, currentTime, stepSize, terminateSimulation](PyGILState_STATE gilState) {
-        auto f = PyObject_CallMethod(pInstance_, "do_step", "(dd)", currentTime, stepSize);
+    py_safe_run([this, &fmuStatus, currentTime, stepSize, eventHandlingNeeded, terminateSimulation, earlyReturn](PyGILState_STATE gilState) {
+                */
+    py_safe_run([this, currentTime, stepSize, noSetFmuStatePriorToCurrentPoint, eventHandlingNeeded, terminateSimulation, earlyReturn, lastSuccessfullTime](PyGILState_STATE gilState) {
+        auto f = PyObject_CallMethod(pInstance_, "do_step", "(dd)", currentTime, stepSize, noSetFmuStatePriorToCurrentPoint);
         if (f == nullptr) {
             handle_py_exception("[doStep] PyObject_CallMethod", gilState);
         }
 
+/*        // optional result according to the old definition
         if (PyObject_HasAttrString(f, "status")) {
             PyObject* pyStatus = PyObject_GetAttrString(f, "status");
             if (pyStatus) {
@@ -228,7 +235,16 @@ cppfmu::FMIStatus PySlaveInstance::DoStep(cppfmu::FMIFloat64 currentTime,
                 fmuStatus = cppfmu::FMIDiscard;
             }
         }
-
+*/
+        if (PyObject_HasAttrString(f, "eventHandlingNeeded")) {
+            PyObject* pyEventHandlingNeeded = PyObject_GetAttrString(f, "eventHandlingNeeded");
+            if (pyEventHandlingNeeded) {
+                *eventHandlingNeeded = static_cast<bool>(PyObject_IsTrue(pyEventHandlingNeeded));
+                Py_DECREF(pyEventHandlingNeeded);
+            }
+        } else {
+            *eventHandlingNeeded = false;
+        }
         if (PyObject_HasAttrString(f, "terminateSimulation")) {
             PyObject* pyTerminateSimulation = PyObject_GetAttrString(f, "terminateSimulation");
             if (pyTerminateSimulation) {
@@ -236,11 +252,27 @@ cppfmu::FMIStatus PySlaveInstance::DoStep(cppfmu::FMIFloat64 currentTime,
                 Py_DECREF(pyTerminateSimulation);
             }
         }
+        if (PyObject_HasAttrString(f, "earlyReturn")) {
+            PyObject* pyEarlyReturn = PyObject_GetAttrString(f, "earlyReturn");
+            if (pyEarlyReturn) {
+                *earlyReturn = static_cast<bool>(PyObject_IsTrue(pyEarlyReturn));
+                Py_DECREF(pyEarlyReturn);
+            }
+        } else {
+            *earlyReturn = false;
+        }
+        if (PyObject_HasAttrString(f, "lastSuccessfullTime")) {
+            PyObject* pyLastSuccessfullTime = PyObject_GetAttrString(f, "lastSuccessfullTime");
+            if (pyLastSuccessfullTime) {
+                *lastSuccessfullTime = PyFloat_AsDouble(pyLastSuccessfullTime);
+                Py_DECREF(pyLastSuccessfullTime);
+            }
+        }
         Py_DECREF(f);
         clearLogBuffer();
     });
 
-    return fmuStatus;
+//    return fmuStatus;
 }
 
 void PySlaveInstance::Reset()

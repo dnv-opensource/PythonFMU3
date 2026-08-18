@@ -134,14 +134,14 @@ public:
         std::size_t nValues) const;
 
     // Called from fmi3DoStep()/fmiDoStep(). Must be implemented in model code.
-    virtual FMIStatus DoStep(
+    virtual void DoStep(
         FMIFloat64 currentCommunicationPoint,
         FMIFloat64 communicationStepSize,
-        FMIBoolean newStep,
+        FMIBoolean noSetFMUStatePriorToCurrentPoint,
         FMIBoolean* eventHandlingNeeded,
         FMIBoolean* terminateSimulation,
         FMIBoolean* earlyReturn,
-        FMIFloat64& endOfStep) = 0;
+        FMIFloat64* lastSuccessfullTime);
 
     // Event- and Clock-related functions
     virtual void EnterEventMode();

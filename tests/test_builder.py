@@ -1,13 +1,18 @@
+import argparse
 import itertools
 import platform
 import tempfile
 import zipfile
+from attrs import asdict
+from fmpy import read_model_description
 from pathlib import Path
 
 import pytest
 
 import pythonfmu3
+from pythonfmu3 import builder, deploy
 from pythonfmu3.builder import FmuBuilder, get_platform
+from pythonfmu3.fmi3slave import Fmi3ModelOptionsCS, Fmi3ModelOptionsME
 
 PROJECT_TEST_CASES = [
     ("dummy.txt",),
@@ -200,5 +205,89 @@ def test_terminals(tmp_path):
     fmu = build()
     with zipfile.ZipFile(fmu) as files:
         names = files.namelist()
-
         assert "terminalsAndIcons/terminalsAndIcons.xml" in names
+
+def test_cli():
+    def default_execution(**kwargs):
+        print("A subcommand must be provided.\n")
+        parser.print_help()
+        
+    parser = argparse.ArgumentParser(prog="pythonfmu")
+    parser.add_argument("-V", "--version", action="version", version="9.9.9")
+
+    parser.set_defaults(execute=default_execution)
+
+    subparsers = parser.add_subparsers(
+        title="Subcommands",
+        description="Call `pythonfmu _command_ -h` to get more help.",
+    )
+
+    build_parser = subparsers.add_parser(
+        "build",
+        description="Build an FMU from a Python script.",
+        help="Build an FMU from a Python script.",
+    )
+    builder.create_command_parser(build_parser)
+
+    deploy_parser = subparsers.add_parser(
+        "deploy",
+        description="""Deploy a Python FMU.
+
+        The command will look in the `resources` folder for one of the following files:
+        `requirements.txt` or `environment.yml`.
+
+        If you specify a environment file but no package manager, `conda` will be selected
+        for `.yaml` and `.yml` otherwise `pip` will be used.
+
+        The tool assume the Python environment in which the FMU should be executed
+        is the current one.
+        """,
+        help="Install Python FMU dependencies.",
+    )
+    deploy.create_command_parser(deploy_parser)
+
+    options = vars(parser.parse_args())
+
+    
+    py_file = Path(__file__).parent.resolve().parent / "examples/two_state.py"
+    #cmd = f" build -f {py_file}"
+    #print("CMD", cmd)
+    args = parser.parse_args(["build", "-f", str(py_file), "--hasEventMode", "--fixedInternalStepSize", "0.01"])
+    assert args.script_file == str(py_file)
+    assert not args.needsExecutionTool
+    assert args.hasEventMode
+    
+    assert isinstance(vars(args), dict), "Arguments converted to dict, which is also used in cli"
+
+    dest = builder.FmuBuilder.build_FMU(
+        script_file = py_file,
+        dest = Path(__file__).parent.resolve() / "test_working_directory",
+        #project_files: Iterable[FilePath] = set(),
+        #documentation_folder: Optional[FilePath] = None,
+        #terminals : Optional[FilePath] = None,
+        options = {'hasEventMode':False, 'canHandleVariableCommunicationStepSize':False}
+    )
+    md = read_model_description(dest, True, True, True)
+    dct = asdict(md.coSimulation)
+    assert not dct['hasEventMode'], f"'hasEventMode' is {dct['hasEventMode']}!"
+    assert not dct['canHandleVariableCommunicationStepSize'], f"{dct['canHandleVariableCommunicationStepSize']}!"
+    print(f"Generated {dest}. Validated modelDescription.")
+
+def test_model_options():
+    mcs = Fmi3ModelOptionsCS(hasEventMode=True, fixedInternalStepSize=0.01)
+    assert mcs.hasEventMode
+    assert mcs.fixedInternalStepSize == 0.01
+    assert not mcs.providesAdjointDerivatives
+    assert not mcs.to_dict()['needsExecutionTool'], "Can access all options as dict"
+    mcs = Fmi3ModelOptionsCS(hasEventMode=True)
+    assert 'fixedInternalStepSize' not in mcs.to_dict(w_none=False), "Not listed because it is None"
+    assert 'needsExecutionTool' in mcs.to_dict(), "Listed even if default value"
+    assert 'needsExecutionTool' not in mcs.to_dict(w_default=False), "Not listed because default value"
+    
+
+if __name__ == "__main__":
+    """Possibility to run single or all tests from the IDE."""
+    retcode = 0#pytest.main(["-rA", "-v", "--rootdir", "../", "--show", "True", __file__])
+    assert retcode == 0, f"Non-zero return code {retcode}"
+    test_cli()
+    #test_model_options()
