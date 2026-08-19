@@ -332,8 +332,10 @@ class Fmi3SlaveBase:
         """Register a variable as FMU interface.
 
         Args:
-            var (ModelVariable): The variable to be registered
-            nested (bool): Optional, does the "." in the variable name reflect an object hierarchy to access it? Default True
+            var: The variable to be registered
+            nested: Optional, does the "." in the variable name reflect an object hierarchy to access it? Default True
+            var_type:
+            has_event_indicator:
         """
         variable_reference = len(self.vars)
         self.vars[variable_reference] = var
@@ -361,7 +363,7 @@ class Fmi3SlaveBase:
                 var.setter = lambda v: setattr(
                     owner,
                     var.local_name,
-                    np.reshape(v, newshape=getattr(owner, var.local_name).shape),
+                    np.reshape(v, shape=getattr(owner, var.local_name).shape),
                 )
             else:
                 var.setter = lambda v: setattr(owner, var.local_name, v)

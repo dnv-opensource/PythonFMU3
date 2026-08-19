@@ -211,9 +211,9 @@ class Dimension:
         attrib = dict()
 
         if self.start:
-            attrib["start"] = self.start
+            attrib["start"] = str(self.start)
         else:
-            attrib["valueReference"] = self.value_reference
+            attrib["valueReference"] = str(self.value_reference)
         ele = Element("Dimension", attrib)
         return ele
 
@@ -469,7 +469,6 @@ class String(ModelVariable):
 
         if self.start is not None:
             parent.append(self._start.to_xml())
-
         return parent
 
 class Clock(ModelVariable):
