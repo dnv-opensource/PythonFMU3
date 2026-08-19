@@ -1,9 +1,10 @@
-"""Implements a two-state discrete event system with states `working=1` and 'failed=0`
+"""Implements a two-state discrete event component with states `working=1` and 'failed=0`
     The MTTF and MTTR are fixed parameters and the actual TTF is exponentially distributed, 
     while TTR is modelled as constant time interval.
 
-   When `enterEventMode` is called, the state changes and a new time interval is calculated,
-   which is transmitted to the orchestrator with a `getIntervalDecimal` call.
+   When `update_discrete_states` is called, the state changes and a new time interval is calculated,
+   which is transmitted to the orchestrator as one of its return values.
+   Clocks are not used in this version.
 """
 import numpy as np
 from collections import namedtuple
