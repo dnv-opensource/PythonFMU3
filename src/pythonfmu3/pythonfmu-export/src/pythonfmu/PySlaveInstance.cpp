@@ -166,6 +166,7 @@ void PySlaveInstance::initialize(PyGILState_STATE gilState)
     pMessages_ = PyObject_CallMethod(pInstance_, "_get_log_queue", nullptr);
 }
 
+/* not included in FMI3:
 void PySlaveInstance::SetupExperiment(cppfmu::FMIBoolean, cppfmu::FMIFloat64, cppfmu::FMIFloat64 startTime, cppfmu::FMIBoolean, cppfmu::FMIFloat64)
 {
     py_safe_run([this, startTime](PyGILState_STATE gilState) {
@@ -177,11 +178,23 @@ void PySlaveInstance::SetupExperiment(cppfmu::FMIBoolean, cppfmu::FMIFloat64, cp
         clearLogBuffer();
     });
 }
-
-void PySlaveInstance::EnterInitializationMode()
+        cppfmu::FMIBoolean toleranceDefined,
+        cppfmu::FMIFloat64 tolerance,
+        cppfmu::FMIFloat64 tStart,
+        cppfmu::FMIBoolean stopTimeDefined,
+        cppfmu::FMIFloat64 tStop) override;
+ */
+// As defined in FMI3 standard:
+void PySlaveInstance::EnterInitializationMode(
+    cppfmu::FMIBoolean toleranceDefined,
+    cppfmu::FMIFloat64 tolerance,
+    cppfmu::FMIFloat64 startTime,
+    cppfmu::FMIBoolean stopTimeDefined,
+    cppfmu::FMIFloat64 stopTime
+    )
 {
-    py_safe_run([this](PyGILState_STATE gilState) {
-        auto f = PyObject_CallMethod(pInstance_, "enter_initialization_mode", nullptr);
+    py_safe_run([this, toleranceDefined, tolerance, startTime, stopTimeDefined, stopTime](PyGILState_STATE gilState) {
+        auto f = PyObject_CallMethod(pInstance_, "enter_initialization_mode", "(ddd)", tolerance, startTime, stopTime);
         if (f == nullptr) {
             handle_py_exception("[enterInitializationMode] PyObject_CallMethod", gilState);
         }
@@ -217,7 +230,7 @@ void PySlaveInstance::DoStep(
     py_safe_run([this, &fmuStatus, currentTime, stepSize, eventHandlingNeeded, terminateSimulation, earlyReturn](PyGILState_STATE gilState) {
                 */
     py_safe_run([this, currentTime, stepSize, noSetFmuStatePriorToCurrentPoint, eventHandlingNeeded, terminateSimulation, earlyReturn, lastSuccessfullTime](PyGILState_STATE gilState) {
-        auto f = PyObject_CallMethod(pInstance_, "do_step", "(dd)", currentTime, stepSize, noSetFmuStatePriorToCurrentPoint);
+        auto f = PyObject_CallMethod(pInstance_, "do_step", "(ddi)", currentTime, stepSize, noSetFmuStatePriorToCurrentPoint);
         if (f == nullptr) {
             handle_py_exception("[doStep] PyObject_CallMethod", gilState);
         }
@@ -850,6 +863,52 @@ void PySlaveInstance::EnterEventMode()
         clearLogBuffer();
     });
 }
+
+void PySlaveInstance::EnterContinuousTimeMode()
+{
+    py_safe_run([this](PyGILState_STATE gilState) {
+        auto f = PyObject_CallMethod(pInstance_, "enter_continuous_time_mode", nullptr);
+        if (f == nullptr) {
+            handle_py_exception("[enterContinuousTimeMode] PyObject_CallMethod", gilState);
+        }
+        Py_DECREF(f);
+        clearLogBuffer();
+    });
+}
+
+void PySlaveInstance::CompletedIntegratorStep(
+    cppfmu::FMIBoolean noSetFMUStatePriorToCurrentPoint,
+    cppfmu::FMIBoolean* enterEventMode,
+    cppfmu::FMIBoolean* terminateSimulation)
+{
+    py_safe_run([this, noSetFMUStatePriorToCurrentPoint, &enterEventMode, &terminateSimulation](PyGILState_STATE gilState) {
+        auto f = PyObject_CallMethod(pInstance_, "completed_integrator_step", "(p)", noSetFMUStatePriorToCurrentPoint);
+        if (f == nullptr) {
+            handle_py_exception("[completedIntegratorStep] PyObject_CallMethod", gilState);
+        }
+        if (PyObject_HasAttrString(f, "enterEventMode")) {
+            PyObject* pyEnterEventMode = PyObject_GetAttrString(f, "enterEventMode");
+            if (pyEnterEventMode) {
+                *enterEventMode = static_cast<bool>(PyObject_IsTrue(pyEnterEventMode));
+                Py_DECREF(pyEnterEventMode);
+            }
+        } else {
+            *enterEventMode = false;
+        }
+        if (PyObject_HasAttrString(f, "terminateSimulation")) {
+            PyObject* pyTerminateSimulation = PyObject_GetAttrString(f, "terminateSimulation");
+            if (pyTerminateSimulation) {
+                *terminateSimulation = static_cast<bool>(PyObject_IsTrue(pyTerminateSimulation));
+                Py_DECREF(pyTerminateSimulation);
+            }
+        } else {
+            *terminateSimulation = false;
+        }
+        Py_DECREF(f);
+        clearLogBuffer();
+    });
+}
+
 
 void PySlaveInstance::EnterStepMode()
 {

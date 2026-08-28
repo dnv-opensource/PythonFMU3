@@ -16,22 +16,29 @@ namespace cppfmu
 // =============================================================================
 
 
+/* not defined in FMI3. Changed EnterInitializationMode takes this role!
 void SlaveInstance::SetupExperiment(
-    FMIBoolean /*toleranceDefined*/,
-    FMIFloat64 /*tolerance*/,
-    FMIFloat64 /*tStart*/,
-    FMIBoolean /*stopTimeDefined*/,
-    FMIFloat64 /*tStop*/)
+    FMIBoolean, //toleranceDefined,
+    FMIFloat64, //tolerance
+    FMIFloat64, //tStart
+    FMIBoolean, //stopTimeDefined
+    FMIFloat64, //tStop
+    )
 {
     // Do nothing
 }
+*/
 
-
-void SlaveInstance::EnterInitializationMode()
+void SlaveInstance::EnterInitializationMode(
+    FMIBoolean, //toleranceDefined,
+    FMIFloat64, //tolerance
+    FMIFloat64, //tStart
+    FMIBoolean, //stopTimeDefined
+    FMIFloat64 //stopTime
+    )
 {
     // Do nothing
 }
-
 
 void SlaveInstance::ExitInitializationMode()
 {
@@ -206,6 +213,18 @@ void SlaveInstance::EnterEventMode()
     // Do nothing
 }
 void SlaveInstance::EnterStepMode()
+{
+    // Do nothing
+}
+void SlaveInstance::EnterContinuousTimeMode()
+{
+
+    // Do nothing
+}
+void SlaveInstance::CompletedIntegratorStep(
+        fmi3Boolean noSetFMUStatePriorToCurrentPoint,
+        fmi3Boolean* enterEventMode,
+        fmi3Boolean* terminateSimulation)
 {
     // Do nothing
 }

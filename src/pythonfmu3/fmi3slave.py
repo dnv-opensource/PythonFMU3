@@ -379,19 +379,27 @@ class Fmi3SlaveBase:
         self.event_indicators.append(vr)
 
     def setup_experiment(self, start_time: float):
+        self.log("setup_experiment() is not defined within FMI3. Use enter_initialization_mode()")
         pass
 
     def register_units(self, units: list[Unit]):
         for unit in units:
             self.units[unit.name] = unit
 
-    def enter_initialization_mode(self):
+    def enter_initialization_mode(self,
+                                  tolerance : float|None = None,
+                                  startTime : float = 0.0,
+                                  stopTime : float|None = None):
         pass
 
     def exit_initialization_mode(self):
         pass
 
-    def do_step(self, current_time: float, step_size: float) -> Fmi3StepResult:
+    def do_step(self,
+                current_time: float,
+                step_size: float,
+                *,
+                noSetFmuStatePriorToCurrentPoint:bool = False) -> Fmi3StepResult:
         pass
 
     def terminate(self):

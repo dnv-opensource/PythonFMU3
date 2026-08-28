@@ -205,11 +205,17 @@ fmi3Status fmi3SetDebugLogging(
     return fmi3OK;
 }
 
-fmi3Status fmi3EnterInitializationMode(fmi3Instance c, fmi3Boolean, fmi3Float64, fmi3Float64, fmi3Boolean, fmi3Float64)
+fmi3Status fmi3EnterInitializationMode(fmi3Instance c,
+                                       fmi3Boolean toleranceDefined,
+                                       fmi3Float64 tolerance,
+                                       fmi3Float64 startTime,
+                                       fmi3Boolean stopTimeDefined,
+                                       fmi3Float64 stopTime
+                                       )
 {
     const auto component = reinterpret_cast<Component*>(c);
     try {
-        component->slave->EnterInitializationMode();
+        component->slave->EnterInitializationMode(toleranceDefined, tolerance, startTime, stopTimeDefined, stopTime);
         return fmi3OK;
     } catch (const cppfmu::FatalError& e) {
         component->logger.Log(fmi3Fatal, "", e.what());
@@ -717,6 +723,8 @@ fmi3Status fmi3UpdateDiscreteStates(fmi3Instance c,
 
 fmi3Status fmi3EnterContinuousTimeMode(fmi3Instance c)
 {
+    const auto component = reinterpret_cast<Component*>(c);
+    component->state = Component::State::ContinuousTimeMode;
     return fmi3OK;
 }
 
@@ -726,8 +734,20 @@ fmi3Status fmi3CompletedIntegratorStep(
     fmi3Boolean* enterEventMode,
     fmi3Boolean* terminateSimulation)
 {
-    *enterEventMode = false;
-    *terminateSimulation = false;
+    const auto component = reinterpret_cast<Component*>(c);
+    try {
+        component->slave->CompletedIntegratorStep(
+            noSetFMUStatePriorToCurrentPoint,
+            enterEventMode,
+            terminateSimulation);
+        return fmi3OK;
+    } catch (const cppfmu::FatalError& e) {
+        component->logger.Log(fmi3Fatal, "", e.what());
+        return fmi3Fatal;
+    } catch (const std::exception& e) {
+        component->logger.Log(fmi3Error, "", e.what());
+        return fmi3Error;
+    }
 
     return fmi3OK;
 }

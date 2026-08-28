@@ -36,6 +36,7 @@ public:
      * (FMI 1.0).
      * Does nothing by default.
      */
+    /* not in FMI3:
     virtual void SetupExperiment(
         FMIBoolean toleranceDefined,
         FMIFloat64 tolerance,
@@ -43,14 +44,18 @@ public:
         FMIBoolean stopTimeDefined,
         FMIFloat64 tStop);
 
-    /* Called from fmi3EnterInitializationMode() (FMI 2.0) or
+     * Called from fmi3EnterInitializationMode() (FMI 2.0) or
      * fmiInitializeSlave() (FMI 1.0).
      * Does nothing by default.
      */
-    virtual void EnterInitializationMode();
+    virtual void EnterInitializationMode(
+        FMIBoolean toleranceDefined,
+        FMIFloat64 tolerance,
+        FMIFloat64 tStart,
+        FMIBoolean stopTimeDefined,
+        FMIFloat64 stopTime);
 
-    /* Called from fmi3ExitInitializationMode() (FMI 2.0) or
-     * fmiInitializeSlave() (FMI 1.0).
+    /* Changed signature in FMI3!
      * Does nothing by default.
      */
     virtual void ExitInitializationMode();
@@ -145,6 +150,11 @@ public:
 
     // Event- and Clock-related functions
     virtual void EnterEventMode();
+    virtual void EnterContinuousTimeMode();
+    virtual void CompletedIntegratorStep(
+        fmi3Boolean noSetFMUStatePriorToCurrentPoint,
+        fmi3Boolean* enterEventMode,
+        fmi3Boolean* terminateSimulation);
     virtual void EnterStepMode();
     virtual void GetClock(  const FMIValueReference vr[], std::size_t nvr, FMIClock values[]) const;
     virtual void SetClock(  const FMIValueReference vr[], std::size_t nvr, const FMIClock values[]);

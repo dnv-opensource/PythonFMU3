@@ -20,8 +20,13 @@ public:
 
     void initialize(PyGILState_STATE gilState);
 
-    void SetupExperiment(cppfmu::FMIBoolean toleranceDefined, cppfmu::FMIFloat64 tolerance, cppfmu::FMIFloat64 tStart, cppfmu::FMIBoolean stopTimeDefined, cppfmu::FMIFloat64 tStop) override;
-    void EnterInitializationMode() override;
+    // not defined: void SetupExperiment(cppfmu::FMIBoolean toleranceDefined, cppfmu::FMIFloat64 tolerance, cppfmu::FMIFloat64 tStart, cppfmu::FMIBoolean stopTimeDefined, cppfmu::FMIFloat64 tStop) override;
+    void EnterInitializationMode(
+        cppfmu::FMIBoolean toleranceDefined,
+        cppfmu::FMIFloat64 tolerance,
+        cppfmu::FMIFloat64 startTime,
+        cppfmu::FMIBoolean stopTimeDefined,
+        cppfmu::FMIFloat64 stopTime) override;
     void ExitInitializationMode() override;
     void Terminate() override;
     void Reset() override;
@@ -54,6 +59,11 @@ public:
 
     // Event- and Clock-related methods
     void EnterEventMode() override;
+    void EnterContinuousTimeMode() override;
+    void CompletedIntegratorStep(
+        cppfmu::FMIBoolean noSetFMUStatePriorToCurrentPoint,
+        cppfmu::FMIBoolean* enterEventMode,
+        cppfmu::FMIBoolean* terminateSimulation);
     void EnterStepMode() override;
     void GetClock(const cppfmu::FMIValueReference* vr, std::size_t nvr, cppfmu::FMIClock* values) const override;
     void SetClock(const cppfmu::FMIValueReference* vr, std::size_t nvr, const cppfmu::FMIClock* values) override;
