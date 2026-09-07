@@ -47,12 +47,21 @@ inline void py_safe_run(const std::function<void(PyGILState_STATE gilState)>& f)
     PyGILState_Release(gil_state);
 }
 
-PySlaveInstance::PySlaveInstance(std::string instanceName, std::string resources, const cppfmu::Logger& logger, const bool visible, std::shared_ptr<IPyState> pyState)
+PySlaveInstance::PySlaveInstance(std::string instanceName,
+                                 std::string resources,
+                                 const cppfmu::Logger& logger,
+                                 const bool visible,
+                                 const bool eventModeUsed,
+                                 const bool earlyReturnAllowed,
+                                 std::shared_ptr<IPyState> pyState
+                                 )
     : pyState_{ std::move(pyState) }
     , instanceName_(std::move(instanceName))
     , resources_(std::move(resources))
     , logger_(logger)
     , visible_(visible)
+    , eventModeUsed_(eventModeUsed)
+    , earlyReturnAllowed_(earlyReturnAllowed)
 {
     py_safe_run([this](PyGILState_STATE gilState) {
         // Append resources path to python sys path
@@ -152,11 +161,14 @@ void PySlaveInstance::initialize(PyGILState_STATE gilState)
     Py_XDECREF(pMessages_);
 
     PyObject* args = PyTuple_New(0);
-    PyObject* kwargs = Py_BuildValue("{ss,ss,sn,si}",
+    PyObject* kwargs = Py_BuildValue("{ss,ss,sn,si,si,si}",
         "instance_name", instanceName_.c_str(),
         "resources", resources_.c_str(),
         "logger", &logger_,
-        "visible", visible_);
+        "visible", visible_,
+        "eventModeUsed", eventModeUsed_,
+        "earlyReturnAllowed", earlyReturnAllowed_
+        );
     pInstance_ = PyObject_Call(pClass_, args, kwargs);
     Py_DECREF(args);
     Py_DECREF(kwargs);
@@ -1278,7 +1290,10 @@ std::unique_ptr<cppfmu::SlaveInstance> CppfmuInstantiateSlave(
     cppfmu::FMIFloat64,
     cppfmu::FMIBoolean visible,
     cppfmu::FMIBoolean,
-    const cppfmu::Logger& logger)
+    const cppfmu::Logger& logger,
+    cppfmu::FMIBoolean eventModeUsed,
+    cppfmu::FMIBoolean earlyReturnAllowed
+    )
 {
 
     // Convert URI %20 to space
@@ -1301,7 +1316,7 @@ std::unique_ptr<cppfmu::SlaveInstance> CppfmuInstantiateSlave(
 
         ensurePyStateAlive();
         return std::make_unique<pythonfmu::PySlaveInstance>(
-            instanceName, resources, logger, visible, pyState);
+            instanceName, resources, logger, visible, eventModeUsed, earlyReturnAllowed, pyState);
     }
 }
 

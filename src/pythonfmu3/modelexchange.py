@@ -1,15 +1,6 @@
 from abc import ABC, ABCMeta, abstractmethod
 from dataclasses import dataclass
-
-
-@dataclass
-class Fmi3UpdateDiscreteStatesResult:
-    discreteStateNeedsUpdate: bool = False
-    terminateSimulation: bool = False
-    nominalsOfContinuousStatesChanged: bool = False
-    valuesOfContinuousStatesChanged: bool = False
-    nextEventTimeDefined: bool = False
-    nextEventTime: float = 0.0
+from pythonfmu3.model_returns import Fmi3UpdateDiscreteStatesResult
 
 
 class RequireTimeMeta(ABCMeta):

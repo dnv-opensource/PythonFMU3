@@ -252,7 +252,9 @@ std::unique_ptr<cppfmu::SlaveInstance> CppfmuInstantiateSlave(
     cppfmu::FMIFloat64 timeout,
     cppfmu::FMIBoolean visible,
     cppfmu::FMIBoolean interactive,
-    const cppfmu::Logger& logger);
-
+    const cppfmu::Logger& logger,
+    cppfmu::FMIBoolean eventModeUsed,
+    cppfmu::FMIBoolean earlyReturnAllowed
+    );
 
 #endif // header guard

@@ -16,7 +16,15 @@ class PySlaveInstance : public cppfmu::SlaveInstance
 {
 
 public:
-    PySlaveInstance(std::string instanceName, std::string resources, const cppfmu::Logger& logger, bool visible, std::shared_ptr<IPyState> pyState);
+    PySlaveInstance(
+        std::string instanceName,
+        std::string resources,
+        const cppfmu::Logger& logger,
+        bool visible,
+        bool eventModeUsed,
+        bool earlyReturnAllowed,
+        std::shared_ptr<IPyState> pyState
+        );
 
     void initialize(PyGILState_STATE gilState);
 
@@ -131,10 +139,11 @@ private:
     PyObject* pMessages_{};
 
     const bool visible_;
+    const bool eventModeUsed_;
+    const bool earlyReturnAllowed_;
     const std::string instanceName_;
     const std::string resources_;
     const cppfmu::Logger& logger_;
-
     mutable std::vector<PyObject*> strBuffer;
     mutable std::vector<PyObject*> logStrBuffer;
 

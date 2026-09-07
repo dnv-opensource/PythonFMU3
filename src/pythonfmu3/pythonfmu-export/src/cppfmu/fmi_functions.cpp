@@ -103,11 +103,13 @@ fmi3Instance fmi3InstantiateCoSimulation(
             instanceName,
             instantiationToken,
             fmuResourceLocation,
-            "application/x-fmu-sharedlibrary",
-            0.0,
+            "application/x-fmu-sharedlibrary", // mimeType
+            0.0,                               // timeout
             visible,
-            cppfmu::FMIFalse,
-            component->logger);
+            cppfmu::FMIFalse,                  // interactive
+            component->logger,
+            eventModeUsed,
+            earlyReturnAllowed);
         return component;
     } catch (const cppfmu::FatalError& e) {
         if (logMessage)
@@ -146,7 +148,9 @@ fmi3Instance fmi3InstantiateModelExchange(
             0.0,
             visible,
             cppfmu::FMIFalse,
-            component->logger);
+            component->logger,
+            cppfmu::FMIFalse,  // dummy added for compatibility with CoSimulation
+            cppfmu::FMIFalse); // dummy added for compatibility with CoSimulation
         return component;
     } catch (const cppfmu::FatalError& e) {
         if (logMessage)

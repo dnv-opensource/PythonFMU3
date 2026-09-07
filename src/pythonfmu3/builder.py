@@ -15,7 +15,8 @@ from typing import Union
 from xml.dom.minidom import parseString
 from xml.etree.ElementTree import Element, tostring
 
-from pythonfmu3.fmi3slave import Fmi3ModelOptionsCS, Fmi3ModelOptionsME, Fmi3SlaveBase
+from pythonfmu3.fmi3slave import Fmi3SlaveBase
+from pythonfmu3.model_options import Fmi3ModelOptionsCS, Fmi3ModelOptionsME
 
 from .osutil import get_lib_extension, get_platform
 
