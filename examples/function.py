@@ -12,13 +12,12 @@ from pythonfmu3.enums import (
     Fmi3IntervalVariability,
     Fmi3Causality,
     Fmi3Variability,
+    Fmi3Initial,
     Fmi3Status)
 from pythonfmu3.variables import Float64, UInt64, String, Dimension
-from pythonfmu3.fmi3slave import (
-    Fmi3StepResult,
-    Fmi3UpdateDiscreteStatesResult,
-    Fmi3ModelOptionsCS,
-    )
+from pythonfmu3.model_returns import Fmi3StepResult, Fmi3UpdateDiscreteStatesResult
+from pythonfmu3.model_options import Fmi3ModelOptionsCS
+
 
 EPS = 1e-14
 
@@ -26,17 +25,20 @@ class Function(Fmi3Slave):
     """Discrete event Function implementation."""
 
     def __init__(self, **kwargs):
-        kwargs.update({'model_options_cs' : Fmi3ModelOptionsCS(canHandleVariableCommunicationStepSize = True),
+        kwargs.update({'model_options_cs' : Fmi3ModelOptionsCS(canHandleVariableCommunicationStepSize = True,
+                                                               hasEventMode=True),
                        'model_options_me' : None,
                        })
         super().__init__(**kwargs)
 
+        self.log(f"FMU Function instantiating: visible:{self.visible}, use events?{self.eventModeUsed}")
         self.author = "Siegfried Eisinger"
         self.description = "Function of its inputs, updating the output"
         
         # Parameters
-        self.n_inputs = 2
-        self.func_name = "Sum"
+        self.n_inputs : int = 2
+        self.func_name : str = "sum"
+        self.par : float = 1.0
 
         # Inputs
         self.inputs: np.ndarray = np.array([0.0]*self.n_inputs, float)
@@ -50,23 +52,28 @@ class Function(Fmi3Slave):
         # Register variables
         self.register_variable(Float64("time", causality=Fmi3Causality.independent))
         self._n_inputs = UInt64("n_inputs",
-                                variability=Fmi3Variability.constant,
-                                causality=Fmi3Causality.local,
+                                variability=Fmi3Variability.fixed,
+                                causality=Fmi3Causality.structuralParameter, 
+                                initial=Fmi3Initial.exact,
                                 start=2)
         self.register_variable(self._n_inputs)
-        self.register_variable(String("func_name", causality=Fmi3Causality.parameter, start="Sum"))
-
+        self.register_variable(String("func_name", causality=Fmi3Causality.parameter, start="sum"))
+        self.register_variable(Float64("par", causality=Fmi3Causality.parameter, start=1.0))
         self.register_variable(Float64("inputs",
-                                       causality=Fmi3Causality.input,
+                                       variability=Fmi3Variability.continuous,
+                                       causality=Fmi3Causality.input, 
                                        dimensions=[Dimension(valueReference=self._n_inputs.value_reference)],
-                                       start=1.0))
+                                       start=(1.0, 1.0) ))
         self.register_variable(Float64("output", causality=Fmi3Causality.output))
         
 
     def calc(self)-> float:
         """Re-calculate the function."""
         if self.func_name == "sum":
-            return sum( x for x in self.inputs)
+            if self.par == 1.0:
+                return sum( x for x in self.inputs)
+            else:
+                return self.par* sum( x for x in self.inputs)
         elif self.func_name == "and":
             res = True
             for x in self.inputs:
@@ -83,8 +90,7 @@ class Function(Fmi3Slave):
             return min(self.inputs)
         elif self.func_name == "max":
             return max(self.inputs)
-        else:
-            raise NotImplementedError(f"The function {self.func_name} is so far not included.") from None
+        raise NotImplementedError(f"The function {self.func_name} is so far not included.") from None
             
     def enter_event_mode(self):
         """Signal from orchestrator that an event has occured."""
@@ -102,8 +108,9 @@ class Function(Fmi3Slave):
 
     def do_step(self, current_time:float, step_size:float, noSetFmuStatePriorToCurrentPoint:bool=True):
         self.time = current_time + step_size
-        self.histogram.append( (current_time, self.output))
-        self.output = self.calc()
+        if not self.eventModeUsed:
+            self.histogram.append( (current_time, self.output))
+            self.output = self.calc()
         return Fmi3StepResult(eventHandlingNeeded = False, lastSuccessfullTime = self.time)
     
     def update_discrete_states(self):
@@ -115,7 +122,7 @@ class Function(Fmi3Slave):
                starting a new super-dense time instant.
             terminateSimulation: True; the FMU requests to stop the simulation.
             nominalsOfContinuousStatesChanged: True; use only for ME!
-            valuesOfContinuousStatesChanged: True; use only for ME!
+            valuesOfContinuousStatesChanged: False; use only for configuration changes
             nextEventTimeDefined: True; the next time event is known and nextEventTime has a valid value.
             nextEventTime: contains the absolute time of the next time event if nextEventTimeDefined = True.
                The importer must compute up to nextEventTime (or if needed slightly further)

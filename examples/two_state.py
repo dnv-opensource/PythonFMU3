@@ -6,16 +6,16 @@
    which is transmitted to the orchestrator as one of its return values.
    Clocks are not used in this version.
 """
+import logging
 import numpy as np
-from collections import namedtuple
 from pythonfmu3 import Fmi3Slave
+from pythonfmu3.cosimulation import Fmi3StepResult
 from pythonfmu3.enums import Fmi3IntervalVariability, Fmi3Causality, Fmi3Status
 from pythonfmu3.variables import Boolean, Float64, Int32, Clock
-from pythonfmu3.fmi3slave import (
-    Fmi3StepResult,
-    Fmi3UpdateDiscreteStatesResult,
-    Fmi3ModelOptionsCS,
-    )
+from pythonfmu3.model_returns import Fmi3UpdateDiscreteStatesResult
+from pythonfmu3.model_options import Fmi3ModelOptionsCS
+
+LOGGER = logging.getLogger(__name__)
 
 EPS = 1e-14
 
@@ -29,7 +29,7 @@ class TwoState(Fmi3Slave):
                        'model_options_me' : None,
                        })
         super().__init__(**kwargs)
-
+        self.log(f"FMU instantiating: visible:{self.visible}, use events?{self.eventModeUsed}")
         self.author = "Siegfried Eisinger"
         self.description = "Two-state discrete event system."
         
@@ -48,6 +48,7 @@ class TwoState(Fmi3Slave):
         self.rng = np.random.default_rng(self.seed)
         self.next_interval = self.get_next_interval()
         self.time = 0.0
+        self.next_time = 0.0
         self.histogram : list[ tuple[float,int]] = []
 
         # Register variables
@@ -72,7 +73,7 @@ class TwoState(Fmi3Slave):
                 return self.rng.exponential(self.mttf)
         else:
             raise ValueError(f"Unallowed state {self.state}") from None
-            
+
     def enter_event_mode(self):
         """Signal from orchestrator that an event has occured."""
         # print(f"EnterEventMode @{self.time}")
@@ -84,16 +85,21 @@ class TwoState(Fmi3Slave):
         pass
 
     def exit_initialization_mode(self):
-        # print(f"Initialization finished")
+        self.log(f"Initialization finished. hasEventMode:{self.model_options_cs.hasEventMode}. UseEvents? {getattr(self, 'eventModeUsed', False)}")
         pass
 
     def do_step(self, current_time:float, step_size:float, noSetFmuStatePriorToCurrentPoint:bool=True):
         self.time = current_time + step_size
         self.histogram.append( (current_time, self.state))
         if self.time >= self.next_time-EPS:
-            ret = Fmi3StepResult(eventHandlingNeeded = True,
-                                 lastSuccessfullTime = self.next_time)
-            # print(f"DoStep@{current_time}: {ret}")
+            if not self.eventModeUsed:
+                _ = self.update_discrete_states()
+                ret = Fmi3StepResult(eventHandlingNeeded = False,
+                                     lastSuccessfullTime = self.time)                
+            else:
+                ret = Fmi3StepResult(eventHandlingNeeded = True,
+                                     lastSuccessfullTime = self.next_time)
+            #print(f"DoStep@{current_time}: {ret}")
         else:
             ret = Fmi3StepResult(eventHandlingNeeded = False,
                                  lastSuccessfullTime = self.time)
@@ -108,7 +114,7 @@ class TwoState(Fmi3Slave):
                starting a new super-dense time instant.
             terminateSimulation: True; the FMU requests to stop the simulation.
             nominalsOfContinuousStatesChanged: True; use only for ME!
-            valuesOfContinuousStatesChanged: True; use only for ME!
+            valuesOfContinuousStatesChanged: False; use only for configuration changes
             nextEventTimeDefined: True; the next time event is known and nextEventTime has a valid value.
             nextEventTime: contains the absolute time of the next time event if nextEventTimeDefined = True.
                The importer must compute up to nextEventTime (or if needed slightly further)
@@ -121,8 +127,10 @@ class TwoState(Fmi3Slave):
         self.state = 1 if self.time == 0.0 else 1 - self.state
         self.next_interval = self.get_next_interval()
         self.next_time = self.time + self.next_interval
-        # print(f"UpdateDiscreteStates @ {self.time} => {self.state}, {self.next_time}")            
-        return Fmi3UpdateDiscreteStatesResult( nextEventTimeDefined=True, nextEventTime=self.next_interval)
+        #print(f"UpdateDiscreteStates @ {self.time} => {self.state}, {self.next_time}")            
+        return Fmi3UpdateDiscreteStatesResult(discreteStatesNeedUpdate=True,
+                                              nextEventTimeDefined=True,
+                                              nextEventTime=self.next_time)
 
 
 if __name__ == "__main__":

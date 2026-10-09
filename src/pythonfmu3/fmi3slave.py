@@ -10,7 +10,7 @@ from uuid import uuid1
 from xml.etree.ElementTree import Element, SubElement
 
 from pythonfmu3._version import __version__ as VERSION
-from pythonfmu3.cosimulation import CoSimulation
+from pythonfmu3.cosimulation import CoSimulation, Fmi3StepResult
 from pythonfmu3.default_experiment import DefaultExperiment
 from pythonfmu3.enums import Fmi3Causality, Fmi3Initial, Fmi3Status, Fmi3Variability
 from pythonfmu3.logmsg import LogMsg
@@ -305,12 +305,12 @@ class Fmi3SlaveBase:
     def exit_initialization_mode(self):
         pass
 
-#     def do_step(self,
-#                 current_time: float,
-#                 step_size: float,
-#                 *,
-#                 noSetFmuStatePriorToCurrentPoint:bool = False) -> Fmi3StepResult:
-#         pass
+    def do_step(self,
+                current_time: float,
+                step_size: float,
+                *,
+                noSetFmuStatePriorToCurrentPoint: bool = False) -> Fmi3StepResult:
+        pass
 
     def terminate(self):
         pass
