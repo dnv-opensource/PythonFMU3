@@ -40,6 +40,7 @@ classifiers = [
 tests = [
     "fmpy",
     "pytest",
+    "scipy",
 ]
 
 [project.scripts]
@@ -50,10 +51,12 @@ path = "pythonfmu3/__init__.py"
 
 [tool.hatch.build.targets.sdist]
 include = [
-    "/pythonfmu3",
+    "src/pythonfmu3",
     "resources/*.dll",
     "resources/*.dylib",
     "resources/*.so",
+    "examples/*.fmu",
+    "examples/*.py",
 ]
 
 [project.urls]

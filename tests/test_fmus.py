@@ -78,7 +78,7 @@ def test_table(*, show: bool):
         #input= np.array( [(0.0, 0.0, 1.0), (1.0, 0.3, 1.0), (5.0, 0.8, 1.0), (10.0, 1.0, 1.0)],
         #                 dtype=[('time', np.double),('inputs[0]', np.double), ('inputs[1]', np.double)]),
         output = ['outputs'],
-        use_event_mode = True,        
+        use_event_mode = True,
     )
     if show:
         do_show(result['time'], result['outputs'], label='Outputs')
@@ -167,10 +167,12 @@ def test_pid(*, show:bool):
                  result['time'], result['output'], 'Control Output') 
 
 if __name__ == "__main__":
-    retcode = 0#pytest.main(["-rA", "-v", "--rootdir", "../", "--show", "False", __file__])
-    assert retcode == 0, f"Non-zero return code {retcode}"
+    retcode = 1
+    if retcode == 0:
+        retcode = pytest.main(["-rA", "-v", "--rootdir", "../", "--show", "False", __file__])
+        assert retcode == 0, f"Non-zero return code {retcode}"
     # test_linear_transform()
     # test_function(show=True)
-    # test_two_state(show=True)
-    test_table(show=True)
+    test_two_state(show=True)
+    # test_table(show=True)
     # test_pid( show=True)
