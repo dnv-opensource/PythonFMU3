@@ -104,6 +104,7 @@ class Function(Fmi3Slave):
 
     def exit_initialization_mode(self):
         # print(f"Initialization finished")
+        self.output = float('nan') # no inputs that, therefore output is initially undefined
         pass
 
     def do_step(self, current_time:float, step_size:float, noSetFmuStatePriorToCurrentPoint:bool=True):
@@ -134,6 +135,7 @@ class Function(Fmi3Slave):
         """
         before_update = self.output
         after_update = self.calc()
+        #self.log(f"Update {self.instance_name}(Function): Inputs:{self.inputs}. {before_update} -> {after_update}")
         if before_update != after_update:
             self.output = after_update
             # make sure that all inputs are updated and loops are managed.

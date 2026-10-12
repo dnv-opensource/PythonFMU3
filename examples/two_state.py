@@ -37,6 +37,7 @@ class TwoState(Fmi3Slave):
         self.mttf = 0.1  # Mean time to failure (ttf exponentially distributed)
         self.mttr = 0.01 # Mean time to repair (ttr constant)
         self.seed = 1
+        self.rng = np.random.default_rng(self.seed)
         self.deterministic = False
 
         # Inputs
@@ -45,7 +46,6 @@ class TwoState(Fmi3Slave):
         self.state = 1
 
         # Internal states
-        self.rng = np.random.default_rng(self.seed)
         self.next_interval = self.get_next_interval()
         self.time = 0.0
         self.next_time = 0.0
@@ -86,7 +86,8 @@ class TwoState(Fmi3Slave):
 
     def exit_initialization_mode(self):
         self.log(f"Initialization finished. hasEventMode:{self.model_options_cs.hasEventMode}. UseEvents? {getattr(self, 'eventModeUsed', False)}")
-        pass
+        self.rng = np.random.default_rng(self.seed)
+
 
     def do_step(self, current_time:float, step_size:float, noSetFmuStatePriorToCurrentPoint:bool=True):
         self.time = current_time + step_size
@@ -127,7 +128,7 @@ class TwoState(Fmi3Slave):
         self.state = 1 if self.time == 0.0 else 1 - self.state
         self.next_interval = self.get_next_interval()
         self.next_time = self.time + self.next_interval
-        #print(f"UpdateDiscreteStates @ {self.time} => {self.state}, {self.next_time}")            
+        # self.log(f"Update {self.instance_name}(TwoState) @{self.time} => {self.state}. NextT:{self.next_time}")            
         return Fmi3UpdateDiscreteStatesResult(discreteStatesNeedUpdate=True,
                                               nextEventTimeDefined=True,
                                               nextEventTime=self.next_time)
