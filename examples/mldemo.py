@@ -1,16 +1,17 @@
-from pythonfmu3 import Fmi3Causality, Fmi3Slave, Float64
-
 import pathlib  # pathlib is included in the Python Standard Library
 
+from pythonfmu3 import Float64, Fmi3Causality, Fmi3Slave
+
 try:
-    import tensorflow as tf
     import numpy as np
-except ImportError: # Trick to be able to generate the FMU without TensorFlow and NumPy installed
+    import tensorflow as tf
+except (
+    ImportError
+):  # Trick to be able to generate the FMU without TensorFlow and NumPy installed
     np, tf = None, None
 
 
 class MLDemo(Fmi3Slave):
-
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -28,22 +29,32 @@ class MLDemo(Fmi3Slave):
                     # Fetch saved model from directory included in the FMU
                     self.model = tf.keras.models.load_model(model_dir_path)
                 except AttributeError:
-                    print("Unable to load model from directory. Has TensorFlow been included in the environment?")
+                    print(
+                        "Unable to load model from directory. Has TensorFlow been included in the environment?"
+                    )
                 except OSError:
-                    print("Unable to load model from directory. Has the correct directory been specified?")
+                    print(
+                        "Unable to load model from directory. Has the correct directory been specified?"
+                    )
             else:
-                print("No model directory found. Has the directory been included in the FMU when building?")
+                print(
+                    "No model directory found. Has the directory been included in the FMU when building?"
+                )
 
-        self.sin_input = 0.
-        self.sin_output_tf = 0.
-        self.sin_output_ref = 0.
+        self.sin_input = 0.0
+        self.sin_output_tf = 0.0
+        self.sin_output_ref = 0.0
 
         self.register_variable(Float64("sin_input", causality=Fmi3Causality.input))
         self.register_variable(Float64("sin_output_tf", causality=Fmi3Causality.output))
-        self.register_variable(Float64("sin_output_ref", causality=Fmi3Causality.output))
+        self.register_variable(
+            Float64("sin_output_ref", causality=Fmi3Causality.output)
+        )
 
     def do_step(self, current_time, step_size):
         # Similar to model.predict() with less performance overhead
-        self.sin_output_tf = self.model(np.array([self.sin_input]), training=False).numpy()[0][0]
+        self.sin_output_tf = self.model(
+            np.array([self.sin_input]), training=False
+        ).numpy()[0][0]
         self.sin_output_ref = np.sin([self.sin_input])[0]
         return True

@@ -29,14 +29,22 @@ Co-simulation FMUs support various variable types and causalities:
 <!-- skip-test -->
 ```python
 # Input variables (set by master algorithm)
-self.register_variable(Float64("input_signal", causality=Fmi3Causality.input, start=0.0))
+self.register_variable(
+    Float64("input_signal", causality=Fmi3Causality.input, start=0.0)
+)
 
 # Output variables (read by master algorithm)
 self.register_variable(Float64("output_signal", causality=Fmi3Causality.output))
 
 # Parameters (configurable, usually fixed during simulation)
-self.register_variable(Float64("gain", causality=Fmi3Causality.parameter,
-                              variability=Fmi3Variability.tunable, start=1.0))
+self.register_variable(
+    Float64(
+        "gain",
+        causality=Fmi3Causality.parameter,
+        variability=Fmi3Variability.tunable,
+        start=1.0,
+    )
+)
 ```
 <!-- /skip-test -->
 
@@ -56,9 +64,9 @@ class PIDController(Fmi3Slave):
         # Inputs
         self.setpoint = 0.0
         self.measurement = 0.0
-        
+
         # Outputs
-        self.control_output = 0.0
+        self.output = 0.0
 
         # Parameters
         self.kp = 1.0  # Proportional gain
@@ -71,12 +79,13 @@ class PIDController(Fmi3Slave):
         self.first_step = True
 
         # Register variables
+        self.register_variable(Float64("time", causality=Fmi3Causality.independent))
         self.register_variable(Float64("setpoint", causality=Fmi3Causality.input, start=0.0))
         self.register_variable(Float64("measurement", causality=Fmi3Causality.input, start=0.0))
         self.register_variable(Float64("output", causality=Fmi3Causality.output))
-        self.register_variable(Float64("Kp", causality=Fmi3Causality.parameter, start=1.0))
-        self.register_variable(Float64("Ki", causality=Fmi3Causality.parameter, start=0.1))
-        self.register_variable(Float64("Kd", causality=Fmi3Causality.parameter, start=0.01))
+        self.register_variable(Float64("kp", causality=Fmi3Causality.parameter, start=1.0))
+        self.register_variable(Float64("ki", causality=Fmi3Causality.parameter, start=0.1))
+        self.register_variable(Float64("kd", causality=Fmi3Causality.parameter, start=0.01))
 
     def do_step(self, current_time, step_size):
         # Calculate error
@@ -97,13 +106,12 @@ class PIDController(Fmi3Slave):
             d_term = self.kd * (error - self.previous_error) / step_size
 
         # PID output
-        self.control_output = p_term + i_term + d_term
+        self.output = p_term + i_term + d_term
 
         # Store error for next iteration
         self.previous_error = error
 
         return True
-
 ```
 
 ### Units
@@ -113,6 +121,7 @@ Units can be added to this example through the `Unit` class along with `register
 <!-- skip-test -->
 ```python
 from pythonfmu3 import Unit
+
 velocity_unit = Unit(name="m/s", m=1, s=-1)
 ```
 which can now be utilized in the register variables call,
@@ -127,12 +136,19 @@ self.register_variable(Float64("v", causality=Fmi3Causality.output, start=0, var
 If numpy is installed, arrays may be used with,
 
 ```python
-from pythonfmu3 import Fmi3Causality, Fmi3Variability, Fmi3Slave, Float64, UInt64, Fmi3Initial, Dimension
+from pythonfmu3 import (
+    Fmi3Causality,
+    Fmi3Variability,
+    Fmi3Slave,
+    Float64,
+    UInt64,
+    Fmi3Initial,
+    Dimension,
+)
 import numpy as np
 
 
 class LinearTransform(Fmi3Slave):
-
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -150,17 +166,56 @@ class LinearTransform(Fmi3Slave):
         self.A = np.array([1.0, 1.0, 2.0, 1.0]).reshape((self.m, self.n))
         self.y = np.array([0.0, 0.0]).reshape((self.m, 1))
 
-
-        self.register_variable(Float64("time", causality=Fmi3Causality.independent, variability=Fmi3Variability.continuous))
-        self.register_variable(UInt64("m", causality=Fmi3Causality.structuralParameter, variability=Fmi3Variability.tunable, start=2))
-        self.register_variable(Float64("scalar", causality=Fmi3Causality.input, start=2.0))
-        self.register_variable(Float64("u", causality=Fmi3Causality.input, dimensions=[Dimension(start=f"{self.n}")]))
-        self.register_variable(Float64("offset", causality=Fmi3Causality.input, dimensions=[Dimension(start=f"{self.m}")]))
-        self.register_variable(Float64("A", causality=Fmi3Causality.parameter, variability=Fmi3Variability.tunable, dimensions=[Dimension(start=f"{self.m}"), Dimension(start=f"{self.n}")]))
-        self.register_variable(Float64("y", causality=Fmi3Causality.output, dimensions=[Dimension(valueReference="1")]))
+        self.register_variable(
+            Float64(
+                "time",
+                causality=Fmi3Causality.independent,
+                variability=Fmi3Variability.continuous,
+            )
+        )
+        self.register_variable(
+            UInt64(
+                "m",
+                causality=Fmi3Causality.structuralParameter,
+                variability=Fmi3Variability.tunable,
+                start=2,
+            )
+        )
+        self.register_variable(
+            Float64("scalar", causality=Fmi3Causality.input, start=2.0)
+        )
+        self.register_variable(
+            Float64(
+                "u",
+                causality=Fmi3Causality.input,
+                dimensions=[Dimension(start=f"{self.n}")],
+            )
+        )
+        self.register_variable(
+            Float64(
+                "offset",
+                causality=Fmi3Causality.input,
+                dimensions=[Dimension(start=f"{self.m}")],
+            )
+        )
+        self.register_variable(
+            Float64(
+                "A",
+                causality=Fmi3Causality.parameter,
+                variability=Fmi3Variability.tunable,
+                dimensions=[Dimension(start=f"{self.m}"), Dimension(start=f"{self.n}")],
+            )
+        )
+        self.register_variable(
+            Float64(
+                "y",
+                causality=Fmi3Causality.output,
+                dimensions=[Dimension(valueReference="1")],
+            )
+        )
 
     def do_step(self, current_time, step_size):
-        self.y = self.scalar*self.A.dot(self.u) + self.offset
+        self.y = self.scalar * self.A.dot(self.u) + self.offset
         return True
 ```
 
@@ -169,6 +224,7 @@ The `do_step` function can also return a tuple of flags, corresponding to those 
 
 ```python
 from pythonfmu3 import Fmi3Status, Fmi3StepResult
+
 
 def do_step(self, current_time, step_size):
     self.y = 1 + 2 + 3 + 4 + ...
@@ -199,34 +255,27 @@ import matplotlib.pyplot as plt
 
 # Simulate the PID controller FMU
 result = simulate_fmu(
-    filename='PIDController.fmu',
+    filename="PIDController.fmu",
     start_time=0.0,
     stop_time=10.0,
     step_size=0.01,
-    start_values={
-        'Kp': 2.0,
-        'Ki': 0.5,
-        'Kd': 0.1,
-        'setpoint': 1.0
-    },
-    input={
-        'measurement': [(0.0, 0.0), (1.0, 0.3), (5.0, 0.8), (10.0, 1.0)]
-    }
+    start_values={"Kp": 2.0, "Ki": 0.5, "Kd": 0.1, "setpoint": 1.0},
+    input={"measurement": [(0.0, 0.0), (1.0, 0.3), (5.0, 0.8), (10.0, 1.0)]},
 )
 
 # Plot results
 plt.figure(figsize=(12, 6))
 plt.subplot(2, 1, 1)
-plt.plot(result['time'], result['setpoint'], label='Setpoint')
-plt.plot(result['time'], result['measurement'], label='Measurement')
-plt.ylabel('Value')
+plt.plot(result["time"], result["setpoint"], label="Setpoint")
+plt.plot(result["time"], result["measurement"], label="Measurement")
+plt.ylabel("Value")
 plt.legend()
 plt.grid(True)
 
 plt.subplot(2, 1, 2)
-plt.plot(result['time'], result['output'], label='Control Output')
-plt.xlabel('Time [s]')
-plt.ylabel('Control Signal')
+plt.plot(result["time"], result["output"], label="Control Output")
+plt.xlabel("Time [s]")
+plt.ylabel("Control Signal")
 plt.legend()
 plt.grid(True)
 plt.show()
