@@ -156,7 +156,7 @@ class FmuBuilder:
             me_option_names = list(Fmi3ModelOptionsME().to_dict().keys())
             if type_node is not None and 'options' in options:
                 for option, value in options['options'].items():
-                    if option in mx_option_names:
+                    if option in me_option_names:
                         type_node.set(option, str(value).lower())
 
             with zipfile.ZipFile(dest_file, "w") as zip_fmu:

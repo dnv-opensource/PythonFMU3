@@ -24,7 +24,7 @@ class BouncingBall(Fmi3Slave):
         
         super().__init__(**kwargs)
 
-        self.log(f"FMU Function instantiating: visible:{self.visible}, use events?{self.eventModeUsed}")
+        self.log(f"FMU Function instantiating: visible:{self.visible}, use events?{self.event_mode_used}")
         self.author = "..."
         self.description = "Bouncing Ball as FMI3 component with event handling"
 
@@ -110,9 +110,9 @@ class BouncingBall(Fmi3Slave):
         self.next_bounce = self.time + self.calc_next_bounce()
         self.energy_min = 0.5* self.v_min* self.v_min
 
-    def do_step(self, current_time:float, step_size:float, noSetFmuStatePriorToCurrentPoint:bool=True):
+    def do_step(self, current_time:float, step_size:float, *, no_set_fmu_state_prior_to_current_point:bool=True):
         self.time = current_time + step_size
-        assert not self.eventModeUsed or self.time < self.next_bounce + EPS, (
+        assert not self.event_mode_used or self.time < self.next_bounce + EPS, (
             f"Time {self.time} > {self.next_bounce}"
         )
         self.derh = self.v
@@ -120,14 +120,14 @@ class BouncingBall(Fmi3Slave):
         self.v += self.derv * step_size
         
         event_handling_needed: bool = False
-        if self.eventModeUsed and abs(self.time - self.next_bounce) < EPS:
+        if self.event_mode_used and abs(self.time - self.next_bounce) < EPS:
             event_handling_needed = True # calculate the next bounce
             
         elif self.h <= 0 and self.v < 0: # when eventMode is not used
             self.h = 1e-12
             self.v = -self.v * self.e
             
-        if not self.eventModeUsed and 0.5*self.v**2 - self.g*self.h < self.energy_min: # stop the bouncing
+        if not self.event_mode_used and 0.5*self.v**2 - self.g*self.h < self.energy_min: # stop the bouncing
             self.v = 0
             self.derv = 0
         ret = Fmi3StepResult(eventHandlingNeeded = event_handling_needed,

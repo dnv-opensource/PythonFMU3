@@ -48,8 +48,8 @@ class Fmi3SlaveBase:
         self.instance_name = kwargs["instance_name"]
         self.resources = kwargs.get("resources", None)
         self.visible = kwargs.get("visible", False)
-        self.eventModeUsed = kwargs.get("eventModeUsed", False)
-        self.earlyReturnAllowed = kwargs.get("earlyReturnAllowed", False)
+        self.event_mode_used = kwargs.get("event_mode_used", False)
+        self.early_return_allowed = kwargs.get("early_return_allowed", False)
         self.model_options_cs = kwargs.get("model_options_cs", Fmi3ModelOptionsCS())
         self.model_options_me = kwargs.get("model_options_me", Fmi3ModelOptionsME())
         self.log_queue = []
@@ -309,7 +309,7 @@ class Fmi3SlaveBase:
                 current_time: float,
                 step_size: float,
                 *,
-                noSetFmuStatePriorToCurrentPoint: bool = False) -> Fmi3StepResult:
+                no_set_fmu_state_prior_to_current_point: bool = False) -> Fmi3StepResult:
         pass
 
     def terminate(self):

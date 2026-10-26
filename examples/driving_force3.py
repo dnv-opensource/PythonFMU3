@@ -38,7 +38,7 @@ class DrivingForce(Fmi3Slave):
                        'model_options_me' : None,
                        })
         super().__init__(**kwargs)
-        self.log(f"FMU instantiating: visible:{self.visible}, use events?{self.eventModeUsed}")
+        self.log(f"FMU instantiating: visible:{self.visible}, use events?{self.event_mode_used}")
         self.author = "Siegfried Eisinger"
         self.description = "FMI3 version of the oscillator component model"
         
@@ -88,7 +88,7 @@ class DrivingForce(Fmi3Slave):
     def do_step(self,
                 current_time: float,
                 step_size: float,
-                noSetFmuStatePriorToCurrentPoint:bool=True) -> Fmi3StepResult:
+                no_set_fmu_state_prior_to_current_point:bool=True) -> Fmi3StepResult:
         self.time = current_time + step_size
         self.f = self.func(self.time)
         ret = Fmi3StepResult(eventHandlingNeeded = False,

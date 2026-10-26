@@ -36,7 +36,7 @@ class Oscillator(Fmi3Slave):
                        'model_options_me' : None,
                        })
         super().__init__(**kwargs)
-        self.log(f"FMU instantiating: visible:{self.visible}, use events?{self.eventModeUsed}")
+        self.log(f"FMU instantiating: visible:{self.visible}, use events?{self.event_mode_used}")
         self.author = "Siegfried Eisinger"
         self.description = "FMI3 version of the oscillator component model"
         
@@ -109,7 +109,8 @@ class Oscillator(Fmi3Slave):
     def do_step(self,
                 current_time: float,
                 step_size: float,
-                noSetFmuStatePriorToCurrentPoint:bool=True) -> Fmi3StepResult:
+                *,
+                no_set_fmu_state_prior_to_current_point:bool=True) -> Fmi3StepResult:
         """Do one simulation step of size dt.
 
         We implement a very simplistic algoritm based on difference calculus.

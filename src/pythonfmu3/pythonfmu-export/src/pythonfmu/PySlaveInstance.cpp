@@ -166,8 +166,8 @@ void PySlaveInstance::initialize(PyGILState_STATE gilState)
         "resources", resources_.c_str(),
         "logger", &logger_,
         "visible", visible_,
-        "eventModeUsed", eventModeUsed_,
-        "earlyReturnAllowed", earlyReturnAllowed_
+        "event_mode_used", eventModeUsed_,
+        "early_return_allowed", earlyReturnAllowed_
         );
     pInstance_ = PyObject_Call(pClass_, args, kwargs);
     Py_DECREF(args);
@@ -276,6 +276,8 @@ void PySlaveInstance::DoStep(
                 *terminateSimulation = static_cast<bool>(PyObject_IsTrue(pyTerminateSimulation));
                 Py_DECREF(pyTerminateSimulation);
             }
+        } else {
+            *terminateSimulation = false;
         }
         if (PyObject_HasAttrString(f, "earlyReturn")) {
             PyObject* pyEarlyReturn = PyObject_GetAttrString(f, "earlyReturn");
@@ -292,6 +294,8 @@ void PySlaveInstance::DoStep(
                 *lastSuccessfullTime = PyFloat_AsDouble(pyLastSuccessfullTime);
                 Py_DECREF(pyLastSuccessfullTime);
             }
+        } else {
+            *lastSuccessfullTime = currentTime + stepSize;
         }
         Py_DECREF(f);
         clearLogBuffer();
@@ -1002,7 +1006,6 @@ void PySlaveInstance::GetIntervalDecimal(
             PyObject* value = PyList_GetItem(ref0, i);
             intervals[i] = PyFloat_AsDouble(value);
         }
-        Py_DECREF(ref0);
         PyObject* ref1 = PyList_GetItem(refs, 1);
         for (int i = 0; i < nvr; i++) {
             PyObject* value = PyList_GetItem(ref1, i);
@@ -1011,7 +1014,7 @@ void PySlaveInstance::GetIntervalDecimal(
             else
                 handle_py_exception("[getIntervalDecimal] invalid interval qualifier", gilState);
         }
-        Py_DECREF(ref1);
+        // ref0 and ref1 represent borrowed references. No DECREF used on them.
         Py_DECREF(refs);
         clearLogBuffer();
     });

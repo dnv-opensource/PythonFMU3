@@ -8,5 +8,5 @@ class CoSimulation(ABC):
                 current_time: float,
                 step_size: float,
                 *,
-                noSetFmuStatePriorToCurrentPoint:bool = False) -> Fmi3StepResult:
+                no_set_fmu_state_prior_to_current_point:bool = False) -> Fmi3StepResult:
         pass

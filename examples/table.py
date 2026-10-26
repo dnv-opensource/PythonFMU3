@@ -29,7 +29,7 @@ class Table(Fmi3Slave):
                        'model_options_me' : None,
                        })
         super().__init__(**kwargs)
-        self.log(f"FMU instantiating: visible:{self.visible}, use events?{self.eventModeUsed}")
+        self.log(f"FMU instantiating: visible:{self.visible}, use events?{self.event_mode_used}")
 
         self.author = "Siegfried Eisinger"
         self.description = "Table with time values in first column changing row with time."
@@ -103,10 +103,10 @@ class Table(Fmi3Slave):
     def exit_configuration_mode(self):
         print(f"Start configuration mode")
 
-    def do_step(self, current_time:float, step_size:float, noSetFmuStatePriorToCurrentPoint:bool=True):
+    def do_step(self, current_time:float, step_size:float, *, no_set_fmu_state_prior_to_current_point:bool=True):
         self.time = current_time + step_size
         if self.time >= self.next_time:
-            if not self.eventModeUsed:
+            if not self.event_mode_used:
                 _ = self.update_discrete_states()
                 ret = Fmi3StepResult(eventHandlingNeeded = False, lastSuccessfullTime = self.time)                
             else:

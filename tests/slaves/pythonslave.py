@@ -86,6 +86,10 @@ class PythonSlave(Fmi3Slave):
             )
         )
 
-    def do_step(self, current_time, step_size):
+    def do_step(self,
+                current_time: float,
+                step_size: float,
+                *,
+                no_set_fmu_state_prior_to_current_point:bool = False) -> Fmi3StepResult:
         self.realOut = current_time + step_size
         return True

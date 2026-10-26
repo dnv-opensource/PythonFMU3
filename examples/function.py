@@ -31,7 +31,7 @@ class Function(Fmi3Slave):
                        })
         super().__init__(**kwargs)
 
-        self.log(f"FMU Function instantiating: visible:{self.visible}, use events?{self.eventModeUsed}")
+        self.log(f"FMU Function instantiating: visible:{self.visible}, use events?{self.event_mode_used}")
         self.author = "Siegfried Eisinger"
         self.description = "Function of its inputs, updating the output"
         
@@ -107,9 +107,9 @@ class Function(Fmi3Slave):
         self.output = float('nan') # no inputs that, therefore output is initially undefined
         pass
 
-    def do_step(self, current_time:float, step_size:float, noSetFmuStatePriorToCurrentPoint:bool=True):
+    def do_step(self, current_time:float, step_size:float, *, no_set_fmu_state_prior_to_current_point:bool=True):
         self.time = current_time + step_size
-        if not self.eventModeUsed:
+        if not self.event_mode_used:
             self.histogram.append( (current_time, self.output))
             self.output = self.calc()
         return Fmi3StepResult(eventHandlingNeeded = False, lastSuccessfullTime = self.time)

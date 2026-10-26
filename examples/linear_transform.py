@@ -66,7 +66,7 @@ class LinearTransform(Fmi3Slave):
         # print(f"Initialization finished")
         pass
 
-    def do_step(self, current_time:float, step_size:float, noSetFmuStatePriorToCurrentPoint:bool=True):
+    def do_step(self, current_time:float, step_size:float, *, no_set_fmu_state_prior_to_current_point:bool=True):
         self.time = current_time + step_size
         self.y = self.transform(self.x)
         return Fmi3StepResult(eventHandlingNeeded = False, lastSuccessfullTime = self.time)

@@ -29,7 +29,7 @@ class TwoState(Fmi3Slave):
                        'model_options_me' : None,
                        })
         super().__init__(**kwargs)
-        self.log(f"FMU instantiating: visible:{self.visible}, use events?{self.eventModeUsed}")
+        self.log(f"FMU instantiating: visible:{self.visible}, use events?{self.event_mode_used}")
         self.author = "Siegfried Eisinger"
         self.description = "Two-state discrete event system."
         
@@ -85,15 +85,15 @@ class TwoState(Fmi3Slave):
         pass
 
     def exit_initialization_mode(self):
-        self.log(f"Initialization finished. hasEventMode:{self.model_options_cs.hasEventMode}. UseEvents? {getattr(self, 'eventModeUsed', False)}")
+        self.log(f"Initialization finished. hasEventMode:{self.model_options_cs.hasEventMode}. UseEvents? {getattr(self, 'event_mode_used', False)}")
         self.rng = np.random.default_rng(self.seed)
 
 
-    def do_step(self, current_time:float, step_size:float, noSetFmuStatePriorToCurrentPoint:bool=True):
+    def do_step(self, current_time:float, step_size:float, *, no_set_fmu_state_prior_to_current_point:bool=True):
         self.time = current_time + step_size
         self.histogram.append( (current_time, self.state))
         if self.time >= self.next_time-EPS:
-            if not self.eventModeUsed:
+            if not self.event_mode_used:
                 _ = self.update_discrete_states()
                 ret = Fmi3StepResult(eventHandlingNeeded = False,
                                      lastSuccessfullTime = self.time)                
