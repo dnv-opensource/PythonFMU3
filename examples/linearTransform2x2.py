@@ -3,7 +3,7 @@ import numpy as np
 from pythonfmu3 import Dimension, Float64, Fmi3Causality, Fmi3Slave, Fmi3Variability
 
 
-class LinearTransformFixed(Fmi3Slave):
+class LinearTransform2x2(Fmi3Slave):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -58,6 +58,24 @@ class LinearTransformFixed(Fmi3Slave):
             )
         )
 
-    def do_step(self, current_time, step_size):
+    def do_step(self,
+                current_communication_point : float,
+                communication_step_size : float,
+                no_set_fmu_state_prior_to_current_point : bool):
         self.y = self.scalar * self.A.dot(self.u) + self.offset
         return True
+    
+if __name__ == "__main__":
+    from pathlib import Path
+    from pythonfmu3.builder import FmuBuilder
+    from fmpy import read_model_description
+
+    dest = FmuBuilder.build_FMU(
+        script_file = Path(__file__),
+        dest = Path(__file__).parent.resolve(),
+        #project_files: Iterable[FilePath] = set(),
+        #documentation_folder: Optional[FilePath] = None,
+        #terminals : Optional[FilePath] = None,
+    )
+    read_model_description(dest, True, True, True)
+    print(f"Generated {dest}. Validated modelDescription.")

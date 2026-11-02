@@ -1,18 +1,19 @@
 import argparse
+from helpers import W_DIR
 import itertools
 import platform
 import tempfile
 import zipfile
-from attrs import asdict
-from fmpy import read_model_description
 from pathlib import Path
 
 import pytest
+from attrs import asdict
+from fmpy import read_model_description
 
 import pythonfmu3
 from pythonfmu3 import builder, deploy
 from pythonfmu3.builder import FmuBuilder, get_platform
-from pythonfmu3.fmi3slave import Fmi3ModelOptionsCS, Fmi3ModelOptionsME
+from pythonfmu3.fmi3slave import Fmi3ModelOptionsCS
 
 PROJECT_TEST_CASES = [
     ("dummy.txt",),
@@ -21,17 +22,14 @@ PROJECT_TEST_CASES = [
     ("dummy.py", "subdir/dummy.txt", "subdir2/dummy2.txt"),
 ]
 
-
-lib_extension = ({"Darwin": "dylib", "Linux": "so", "Windows": "dll"}).get(
-    platform.system(), None
-)
+lib_extension = ({"Darwin": "dylib", "Linux": "so", "Windows": "dll"}).get(platform.system())
 
 
-def test_zip_content(tmp_path):
+def test_zip_content():
 
     script_name = "pythonslave.py"
     script_file = Path(__file__).parent / "slaves" / script_name
-    fmu = FmuBuilder.build_FMU(script_file, dest=tmp_path)
+    fmu = FmuBuilder.build_FMU(script_file, dest=W_DIR)
     assert fmu.exists()
     assert zipfile.is_zipfile(fmu)
 
@@ -45,10 +43,7 @@ def test_zip_content(tmp_path):
 
         nfiles = 20
         if FmuBuilder.has_binary():
-            assert (
-                "/".join(("binaries", get_platform(), f"PythonSlave.{lib_extension}"))
-                in names
-            )
+            assert "/".join(("binaries", get_platform(), f"PythonSlave.{lib_extension}")) in names
         else:
             nfiles -= 1
 
@@ -70,16 +65,14 @@ def test_zip_content(tmp_path):
             if "test" not in relative_f:
                 assert "/".join(("resources", "pythonfmu3", relative_f)) in names
 
-        assert (
-            len(names) >= nfiles
-        )  # Library + python script + XML + module name + sources
+        assert len(names) >= nfiles  # Library + python script + XML + module name + sources
 
         with files.open(module_file) as myfile:
             assert myfile.read() == b"pythonslave"
 
 
 @pytest.mark.parametrize("pfiles", PROJECT_TEST_CASES)
-def test_project_files(tmp_path, pfiles):
+def test_project_files(pfiles):
     pfiles = map(Path, pfiles)
     script_file = Path(__file__).parent / "slaves/pythonslave.py"
 
@@ -108,9 +101,7 @@ def test_project_files(tmp_path, pfiles):
                     project_files.remove(to_remove)
                     project_files.add(full_name.parent)
 
-            return FmuBuilder.build_FMU(
-                script_file, dest=tmp_path, project_files=project_files
-            )
+            return FmuBuilder.build_FMU(script_file, dest=W_DIR, project_files=project_files)
 
     fmu = build()
     with zipfile.ZipFile(fmu) as files:
@@ -148,9 +139,7 @@ def test_project_files_containing_script(tmp_path, pfiles):
                 else:
                     full_name.mkdir(parents=True, exist_ok=True)
 
-            return FmuBuilder.build_FMU(
-                script_file, dest=tmp_path, project_files=[script_file.parent]
-            )
+            return FmuBuilder.build_FMU(script_file, dest=tmp_path, project_files=[script_file.parent])
 
     fmu = build()
     with zipfile.ZipFile(fmu) as files:
@@ -179,9 +168,7 @@ def test_documentation(tmp_path):
             license_file.write_text("Dummy license")
             index_file = doc_dir / "index.html"
             index_file.write_text("dummy index")
-            return FmuBuilder.build_FMU(
-                script_file, dest=tmp_path, documentation_folder=doc_dir
-            )
+            return FmuBuilder.build_FMU(script_file, dest=tmp_path, documentation_folder=doc_dir)
 
     fmu = build()
     with zipfile.ZipFile(fmu) as files:
@@ -207,11 +194,12 @@ def test_terminals(tmp_path):
         names = files.namelist()
         assert "terminalsAndIcons/terminalsAndIcons.xml" in names
 
+
 def test_cli():
     def default_execution(**kwargs):
         print("A subcommand must be provided.\n")
         parser.print_help()
-        
+
     parser = argparse.ArgumentParser(prog="pythonfmu")
     parser.add_argument("-V", "--version", action="version", version="9.9.9")
 
@@ -248,46 +236,49 @@ def test_cli():
 
     options = vars(parser.parse_args())
 
-    
     py_file = Path(__file__).parent.resolve().parent / "examples/two_state.py"
-    #cmd = f" build -f {py_file}"
-    #print("CMD", cmd)
+    # cmd = f" build -f {py_file}"
+    # print("CMD", cmd)
     args = parser.parse_args(["build", "-f", str(py_file), "--hasEventMode", "--fixedInternalStepSize", "0.01"])
     assert args.script_file == str(py_file)
     assert not args.needsExecutionTool
     assert args.hasEventMode
-    
+
     assert isinstance(vars(args), dict), "Arguments converted to dict, which is also used in cli"
 
     dest = builder.FmuBuilder.build_FMU(
-        script_file = py_file,
-        dest = Path(__file__).parent.resolve() / "test_working_directory",
-        #project_files: Iterable[FilePath] = set(),
-        #documentation_folder: Optional[FilePath] = None,
-        #terminals : Optional[FilePath] = None,
-        options = {'hasEventMode':False, 'canHandleVariableCommunicationStepSize':False}
+        script_file=py_file,
+        dest=Path(__file__).parent.resolve() / "test_working_directory",
+        # project_files: Iterable[FilePath] = set(),
+        # documentation_folder: Optional[FilePath] = None,
+        # terminals : Optional[FilePath] = None,
+        options={"hasEventMode": False, "canHandleVariableCommunicationStepSize": False},
     )
     md = read_model_description(dest, True, True, True)
     dct = asdict(md.coSimulation)
-    assert not dct['hasEventMode'], f"'hasEventMode' is {dct['hasEventMode']}!"
-    assert not dct['canHandleVariableCommunicationStepSize'], f"{dct['canHandleVariableCommunicationStepSize']}!"
+    assert not dct["hasEventMode"], f"'hasEventMode' is {dct['hasEventMode']}!"
+    assert not dct["canHandleVariableCommunicationStepSize"], f"{dct['canHandleVariableCommunicationStepSize']}!"
     print(f"Generated {dest}. Validated modelDescription.")
+
 
 def test_model_options():
     mcs = Fmi3ModelOptionsCS(hasEventMode=True, fixedInternalStepSize=0.01)
     assert mcs.hasEventMode
     assert mcs.fixedInternalStepSize == 0.01
     assert not mcs.providesAdjointDerivatives
-    assert not mcs.to_dict()['needsExecutionTool'], "Can access all options as dict"
+    assert not mcs.to_dict()["needsExecutionTool"], "Can access all options as dict"
     mcs = Fmi3ModelOptionsCS(hasEventMode=True)
-    assert 'fixedInternalStepSize' not in mcs.to_dict(w_none=False), "Not listed because it is None"
-    assert 'needsExecutionTool' in mcs.to_dict(), "Listed even if default value"
-    assert 'needsExecutionTool' not in mcs.to_dict(w_default=False), "Not listed because default value"
-    
+    assert "fixedInternalStepSize" not in mcs.to_dict(w_none=False), "Not listed because it is None"
+    assert "needsExecutionTool" in mcs.to_dict(), "Listed even if default value"
+    assert "needsExecutionTool" not in mcs.to_dict(w_default=False), "Not listed because default value"
+
 
 if __name__ == "__main__":
     """Possibility to run single or all tests from the IDE."""
-    retcode = 0#pytest.main(["-rA", "-v", "--rootdir", "../", "--show", "True", __file__])
-    assert retcode == 0, f"Non-zero return code {retcode}"
-    test_cli()
-    #test_model_options()
+    retcode = 0
+    if retcode == 0:
+        retcode = pytest.main(["-rA", "-v", "--rootdir", "../", "--show", "False", __file__])
+        assert retcode == 0, f"Non-zero return code {retcode}"
+    #test_zip_content()
+    # test_cli()
+    # test_model_options()

@@ -333,9 +333,7 @@ class BouncingBall(Fmi3SlaveBase, ModelExchange):
                 variability=Fmi3Variability.tunable,
             )
         )
-        self.register_variable(
-            Float64("v_min", variability=Fmi3Variability.constant, start=0.1)
-        )
+        self.register_variable(Float64("v_min", variability=Fmi3Variability.constant, start=0.1))
 
     def get_continuous_state_derivatives(self) -> List[float]:
         self.derh = self.v

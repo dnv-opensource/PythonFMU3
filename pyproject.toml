@@ -2,23 +2,47 @@
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[tool.hatch.build.targets.sdist]
+include = [
+    "src/pythonfmu3",
+    "resources/*.dll",
+    "resources/*.dylib",
+    "resources/*.so",
+    "examples/*.fmu",
+    "examples/*.py",
+    "pyproject.toml",
+    "pytest.ini",
+    "ruff.toml",
+    "uv.lock",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = [
+    "src/pythonfmu3",
+]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
 [project]
 name = "pythonfmu3"
 version = "0.4.0"
 description = "A lightweight framework that enables the packaging of Python3.x code as co-simulation FMUs with (partial) FMI3 features support."
 readme = "README.md"
+requires-python = ">= 3.12"
 license = { file = "LICENSE" }
 authors = [
+    { name = "Lars Ivar Hatledal"},
     { name = "Stephen Smith" },
+    { name = "Siegfried Eisinger", email = "siegfried.eisinger@dnv.com" },
 ]
 keywords = [
-    "FMI", "simulation"
+    "FMI", "simulation", "co-simulation", "FMI3"
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
@@ -35,6 +59,13 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Natural Language :: English",
 ]
+dependencies = [
+    "fmpy>=0.3.21",
+    "pyqt6>=6.10",
+    "xmlschema>=4.3",
+    "defusedxml>=0.7.1",
+]
+
 
 [project.optional-dependencies]
 tests = [
@@ -45,19 +76,6 @@ tests = [
 
 [project.scripts]
 pythonfmu3 = "pythonfmu3.__main__:cli_main"
-
-[tool.hatch.version]
-path = "pythonfmu3/__init__.py"
-
-[tool.hatch.build.targets.sdist]
-include = [
-    "src/pythonfmu3",
-    "resources/*.dll",
-    "resources/*.dylib",
-    "resources/*.so",
-    "examples/*.fmu",
-    "examples/*.py",
-]
 
 [project.urls]
 Homepage = "https://github.com/stephensmith25/PythonFMU3"
@@ -81,6 +99,8 @@ dev = [
     "furo>=2025.12",
     "scipy-stubs>=1.17.1",
     "matplotlib>=3.10",
+    "types-defusedxml",
+    "rope>=1.15.0",
 ]
 
 [tool.uv]
@@ -95,10 +115,69 @@ required-environments = [
     # "sys_platform == 'darwin'",
 ]
 
+[tool.mypy]
+plugins = []
+mypy_path = "stubs"
+files = [
+    "src",
+    "tests",
+    "examples",
+]
+
+
 [tool.pytest]
-addopts = ["--strict-markers"]
+# addopts = ["--strict-markers"]
 markers = [
     "integration: marks integration tests",
     "doc: marks documentation tests"
 ]
 
+[tool.pyright]
+stubPath = "stubs"
+include = [
+    "src",
+    "tests",
+    "examples",
+]
+exclude = [
+    "**/node_modules",
+    "**/__pycache__",
+    "**/.*",
+    ".venv",
+    "examples",  # python code here comes from other sources
+    "tests/test_working_directory",
+]
+typeCheckingMode = "basic"
+useLibraryCodeForTypes = true
+reportMissingParameterType = "error"
+reportUnknownParameterType = "warning"
+reportUnknownMemberType = "warning"                # consider to set to `false` if you work a lot with matplotlib and pandas, which are both not properly typed and known to trigger this warning
+reportMissingTypeArgument = "error"
+reportPropertyTypeMismatch = "error"
+reportFunctionMemberAccess = "warning"
+reportPrivateUsage = "warning"
+reportTypeCommentUsage = "warning"
+reportIncompatibleMethodOverride = "warning"
+reportIncompatibleVariableOverride = "error"
+reportInconsistentConstructor = "error"
+reportOverlappingOverload = "warning"
+reportUninitializedInstanceVariable = "warning"
+reportCallInDefaultInitializer = "warning"
+reportUnnecessaryIsInstance = "information"
+reportUnnecessaryCast = "warning"
+reportUnnecessaryComparison = "warning"
+reportUnnecessaryContains = "warning"
+reportUnusedCallResult = "warning"
+reportUnusedExpression = "warning"
+reportMatchNotExhaustive = "warning"
+reportUntypedFunctionDecorator = "warning"
+reportUntypedClassDecorator = "warning"
+reportUntypedBaseClass = "error"
+reportUntypedNamedTuple = "warning"
+reportUnnecessaryTypeIgnoreComment = "information"
+# Activate the following rules only locally and temporary, i.e. for a QA session.
+# (For server side CI they are considered too strict.)
+# reportMissingTypeStubs = true
+# reportConstantRedefinition = "warning"
+# reportImportCycles = "warning"
+# reportImplicitStringConcatenation = "warning"

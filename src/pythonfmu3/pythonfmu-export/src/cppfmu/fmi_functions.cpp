@@ -7,6 +7,8 @@
 
 #include <exception>
 #include <limits>
+#include <iostream>
+
 
 #define NOT_IMPLEMENTED throw std::logic_error("function " + std::string(__func__) + " not implemented")
 
@@ -919,6 +921,7 @@ fmi3Status fmi3DoStep(
             terminateSimulation,
             earlyReturn,
             lastSuccessfullTime);
+
         return fmi3OK;
 /* Changed that back to the original definition leaving the logic to the components
    fmi3Float64* lastSuccessfulTime)

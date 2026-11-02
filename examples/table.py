@@ -15,7 +15,7 @@ from pythonfmu3.enums import (
     Fmi3Initial,
     Fmi3Status)
 from pythonfmu3.variables import Float64, UInt64, String, Dimension
-from pythonfmu3.model_returns import Fmi3StepResult, Fmi3UpdateDiscreteStatesResult
+from pythonfmu3.model_returns import Fmi3StepResult, UpdateDiscreteStatesResult
 from pythonfmu3.model_options import Fmi3ModelOptionsCS
 
 EPS = 1e-14
@@ -23,14 +23,14 @@ EPS = 1e-14
 class Table(Fmi3Slave):
     """Input table changing values with time."""
 
-    def __init__(self, **kwargs):
-        kwargs.update({'model_options_cs' : Fmi3ModelOptionsCS(canHandleVariableCommunicationStepSize = True,
-                                                               hasEventMode = True),
-                       'model_options_me' : None,
-                       })
+    def __init__(self,
+                 model_options_cs = Fmi3ModelOptionsCS(**{'canHandleVariableCommunicationStepSize':True,
+                                                          'hasEventMode':True}),
+                 **kwargs
+                ):
+        kwargs.update({'model_options_cs' : model_options_cs})
         super().__init__(**kwargs)
         self.log(f"FMU instantiating: visible:{self.visible}, use events?{self.event_mode_used}")
-
         self.author = "Siegfried Eisinger"
         self.description = "Table with time values in first column changing row with time."
 
@@ -103,12 +103,15 @@ class Table(Fmi3Slave):
     def exit_configuration_mode(self):
         print(f"Start configuration mode")
 
-    def do_step(self, current_time:float, step_size:float, *, no_set_fmu_state_prior_to_current_point:bool=True):
-        self.time = current_time + step_size
+    def do_step(self,
+                current_communication_point:float,
+                communication_step_size:float,
+                no_set_fmu_state_prior_to_current_point:bool):
+        self.time = current_communication_point + communication_step_size
         if self.time >= self.next_time:
             if not self.event_mode_used:
                 _ = self.update_discrete_states()
-                ret = Fmi3StepResult(eventHandlingNeeded = False, lastSuccessfullTime = self.time)                
+                return Fmi3StepResult(eventHandlingNeeded = False, lastSuccessfullTime = self.time)                
             else:
                 return Fmi3StepResult(eventHandlingNeeded = True, lastSuccessfullTime = self.next_time)
         else:
@@ -140,11 +143,11 @@ class Table(Fmi3Slave):
             else:
                 self.next_time = float('inf')
             self.outputs = self.values[self.row]
-            return Fmi3UpdateDiscreteStatesResult( discreteStatesNeedUpdate = True,
-                                                   nextEventTimeDefined = (self.next_time is not None),
-                                                   nextEventTime = self.next_time)
+            return UpdateDiscreteStatesResult(discrete_states_need_update = True,
+                                              next_event_time_defined = (self.next_time is not None),
+                                              next_event_time = self.next_time)
         else:
-            return Fmi3UpdateDiscreteStatesResult()
+            return UpdateDiscreteStatesResult()
 
 if __name__ == "__main__":
     from pathlib import Path

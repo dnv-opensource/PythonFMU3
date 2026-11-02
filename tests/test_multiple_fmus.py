@@ -1,16 +1,14 @@
+"""Simulation of two independent FMUs."""
+from helpers import W_DIR
 import math
 
 import pytest
 
 from pythonfmu3.builder import FmuBuilder
 
-pytestmark = pytest.mark.skipif(
-    not FmuBuilder.has_binary(), reason="No binary available for the current platform."
-)
+pytestmark = pytest.mark.skipif(not FmuBuilder.has_binary(), reason="No binary available for the current platform.")
 
-fmpy = pytest.importorskip(
-    "fmpy", reason="fmpy is not available for testing the produced FMU"
-)
+fmpy = pytest.importorskip("fmpy", reason="fmpy is not available for testing the produced FMU")
 
 
 def mapped(md):
@@ -21,7 +19,7 @@ def mapped(md):
 
 
 @pytest.mark.integration
-def test_integration_multiple_fmus(tmp_path):
+def test_integration_multiple_fmus():
     slave1_code = """import math
 from pythonfmu3 import Fmi3Slave, Fmi3Causality, Fmi3Variability, Int32, Float64, Boolean, String
 
@@ -38,9 +36,9 @@ class Slave1(Fmi3Slave):
         self.register_variable(Float64("realIn", causality=Fmi3Causality.input))
         self.register_variable(Float64("realOut", causality=Fmi3Causality.output))
 
-    def do_step(self, current_time, step_size):
+    def do_step(self, current_communication_point, communication_step_size, noSetFMUStatePriorToCurrentPoint):
         self.log("Do step on Slave1.")
-        self.realOut = self.realIn * 5.0 * (1.0 - math.exp(-1.0 * (current_time + step_size) / 0.1))
+        self.realOut = self.realIn * 5.0 * (1.0 - math.exp(-1.0 * (current_communication_point + communication_step_size) / 0.1))
         return True
 """
 
@@ -59,23 +57,23 @@ class Slave2(Fmi3Slave):
         self.register_variable(Float64("realIn", causality=Fmi3Causality.input))
         self.register_variable(Float64("realOut", causality=Fmi3Causality.output))
 
-    def do_step(self, current_time, step_size):
+    def do_step(self, current_communication_point, communication_step_size, noSetFMUStatePriorToCurrentPoint):
         self.log("Do step on Slave2.")
         self.realOut = -2.0 * self.realIn
         return True
 """
 
-    script1_file = tmp_path / "orig" / "slave1.py"
+    script1_file = W_DIR / "orig" / "slave1.py"
     script1_file.parent.mkdir(parents=True, exist_ok=True)
     script1_file.write_text(slave1_code)
 
-    fmu1 = FmuBuilder.build_FMU(script1_file, dest=tmp_path, needsExecutionTool="false")
+    fmu1 = FmuBuilder.build_FMU(script1_file, dest=W_DIR, options={'needsExecutionTool':False})
     assert fmu1.exists()
 
-    script2_file = tmp_path / "orig" / "slave2.py"
+    script2_file = W_DIR / "orig" / "slave2.py"
     script2_file.write_text(slave2_code)
 
-    fmu2 = FmuBuilder.build_FMU(script2_file, dest=tmp_path, needsExecutionTool="false")
+    fmu2 = FmuBuilder.build_FMU(script2_file, dest=W_DIR, options={'needsExecutionTool':False})
     assert fmu2.exists()
 
     md1 = fmpy.read_model_description(fmu1)
@@ -89,7 +87,7 @@ class Slave2(Fmi3Slave):
     )
 
     model1.instantiate()
-    model1.enterInitializationMode()
+    model1.enterInitializationMode(tolerance=None, startTime=0.0, stopTime=10.0)
     model1.exitInitializationMode()
 
     md2 = fmpy.read_model_description(fmu2)
@@ -109,7 +107,7 @@ class Slave2(Fmi3Slave):
     realIn = variables2["realIn"]
 
     model2.instantiate()
-    model2.enterInitializationMode()
+    model2.enterInitializationMode(tolerance=None, startTime=0.0, stopTime=10.0)
 
     value = model1.getFloat64([realOut.valueReference])[0]
     model2.setFloat64([realIn.valueReference], [value])
@@ -118,18 +116,26 @@ class Slave2(Fmi3Slave):
 
     time = 0
     stop_time = 0.1
-    step_size = 0.025
+    communication_step_size = 0.025
 
     while time < stop_time:
         model2.setFloat64([realIn.valueReference], [value])
 
-        model1.doStep(time, step_size)
-        model2.doStep(time, step_size)
+        model1.doStep(time, communication_step_size, True)
+        model2.doStep(time, communication_step_size, noSetFMUStatePriorToCurrentPoint=True)
 
         value = model1.getFloat64([realOut.valueReference])[0]
 
-        time += step_size
+        time += communication_step_size
 
-    assert value == pytest.approx(
-        22.0 * 5.0 * (1.0 - math.exp(-1.0 * time / 0.1)), rel=1e-7
-    )
+    assert value == pytest.approx(22.0 * 5.0 * (1.0 - math.exp(-1.0 * time / 0.1)), rel=1e-7)
+    
+if __name__ == "__main__":
+    """Possibility to run single or all tests from the IDE."""
+    retcode = 1
+    if retcode == 0:
+        retcode = pytest.main(["-rA", "-v", "--rootdir", "../", "--show", "False", __file__])
+        assert retcode == 0, f"Non-zero return code {retcode}"
+
+test_integration_multiple_fmus()
+

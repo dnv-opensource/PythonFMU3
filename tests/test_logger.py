@@ -7,12 +7,8 @@ from pythonfmu3.builder import FmuBuilder
 from pythonfmu3.enums import Fmi3Status
 from pythonfmu3.fmi3slave import Fmi3Slave
 
-fmpy = pytest.importorskip(
-    "fmpy", reason="fmpy is not available for testing the produced FMU"
-)
-pytestmark = pytest.mark.skipif(
-    not FmuBuilder.has_binary(), reason="No binary available for the current platform."
-)
+fmpy = pytest.importorskip("fmpy", reason="fmpy is not available for testing the produced FMU")
+pytestmark = pytest.mark.skipif(not FmuBuilder.has_binary(), reason="No binary available for the current platform.")
 
 if True:
     pytest.skip("This test needs to be manually enabled", allow_module_level=True)
@@ -30,12 +26,7 @@ def test_logger(tmp_path, debug_logging):
         for debug, status in itertools.product([True, False], Fmi3Status)
     ]
 
-    fmu_calls = "\n".join(
-        [
-            f'        self.log("{c[0]}", Fmi3Status.{c[1].name}, "{c[2]}", {c[3]})'
-            for c in log_calls
-        ]
-    )
+    fmu_calls = "\n".join([f'        self.log("{c[0]}", Fmi3Status.{c[1].name}, "{c[2]}", {c[3]})' for c in log_calls])
 
     slave_code = f"""from pythonfmu3.Fmi3Slave import Fmi3Slave, Fmi3Status, Fmi3Causality, Int32, Float64, Boolean, String
 
@@ -51,7 +42,7 @@ class {name}(Fmi3Slave):
         self.register_variable(Float64("realOut", causality=Fmi3Causality.output))
 
 
-    def do_step(self, current_time, step_size):
+    def do_step(self, current_communication_point, communication_step_size):
 {fmu_calls}
         return True
 """
@@ -100,12 +91,7 @@ def test_log_categories(tmp_path, debug_logging, categories):
         for debug, status in itertools.product([True, False], Fmi3Status)
     ]
 
-    fmu_calls = "\n".join(
-        [
-            f'        self.log("{c[0]}", Fmi3Status.{c[1].name}, None, {c[2]})'
-            for c in log_calls
-        ]
-    )
+    fmu_calls = "\n".join([f'        self.log("{c[0]}", Fmi3Status.{c[1].name}, None, {c[2]})' for c in log_calls])
 
     slave_code = f"""from pythonfmu3.Fmi3Slave import Fmi3Slave, Fmi3Status, Fmi3Causality, Int32, Float64, Boolean, String
 
@@ -121,7 +107,7 @@ class {name}(Fmi3Slave):
         self.register_variable(Float64("realOut", causality=Fmi3Causality.output))
 
 
-    def do_step(self, current_time, step_size):
+    def do_step(self, current_communication_point, communication_step_size):
 {fmu_calls}
         return True
 """

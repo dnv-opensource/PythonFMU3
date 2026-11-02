@@ -7,6 +7,7 @@ from pythonfmu3.fmi3slave import (
     Int32,
     String,
 )
+from pythonfmu3.model_returns import Fmi3StepResult
 
 
 class Container:
@@ -17,7 +18,9 @@ class PythonSlave(Fmi3Slave):
     author = "John Doe"
     description = "A simple description"
 
-    def __init__(self, **kwargs):
+    def __init__(self,
+                 
+                 **kwargs):
         super().__init__(**kwargs)
 
         self.intParam = 42
@@ -62,9 +65,7 @@ class PythonSlave(Fmi3Slave):
 
         self.register_variable(Int32("intOut", causality=Fmi3Causality.output))
         self.register_variable(Float64("realOut", causality=Fmi3Causality.output))
-        self.register_variable(
-            Boolean("booleanVariable", causality=Fmi3Causality.local)
-        )
+        self.register_variable(Boolean("booleanVariable", causality=Fmi3Causality.local))
         self.register_variable(String("stringVariable", causality=Fmi3Causality.local))
 
         self.container = Container()
@@ -86,10 +87,7 @@ class PythonSlave(Fmi3Slave):
             )
         )
 
-    def do_step(self,
-                current_time: float,
-                step_size: float,
-                *,
-                no_set_fmu_state_prior_to_current_point:bool = False) -> Fmi3StepResult:
+    def do_step(
+        self, current_time: float, step_size: float, no_set_fmu_state_prior_to_current_point: bool) -> Fmi3StepResult:
         self.realOut = current_time + step_size
         return True

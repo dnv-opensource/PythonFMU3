@@ -15,7 +15,7 @@ from pythonfmu3.enums import (
     Fmi3Initial,
     Fmi3Status)
 from pythonfmu3.variables import Float64, UInt64, String, Dimension
-from pythonfmu3.model_returns import Fmi3StepResult, Fmi3UpdateDiscreteStatesResult
+from pythonfmu3.model_returns import Fmi3StepResult, UpdateDiscreteStatesResult
 from pythonfmu3.model_options import Fmi3ModelOptionsCS
 
 
@@ -24,13 +24,12 @@ EPS = 1e-14
 class Function(Fmi3Slave):
     """Discrete event Function implementation."""
 
-    def __init__(self, **kwargs):
-        kwargs.update({'model_options_cs' : Fmi3ModelOptionsCS(canHandleVariableCommunicationStepSize = True,
-                                                               hasEventMode=True),
-                       'model_options_me' : None,
-                       })
+    def __init__(self,
+                 model_options_cs = Fmi3ModelOptionsCS(**{'canHandleVariableCommunicationStepSize':True,
+                                                          'hasEventMode':True}),
+                  **kwargs):
+        kwargs.update({'model_options_cs' : model_options_cs})
         super().__init__(**kwargs)
-
         self.log(f"FMU Function instantiating: visible:{self.visible}, use events?{self.event_mode_used}")
         self.author = "Siegfried Eisinger"
         self.description = "Function of its inputs, updating the output"
@@ -107,10 +106,13 @@ class Function(Fmi3Slave):
         self.output = float('nan') # no inputs that, therefore output is initially undefined
         pass
 
-    def do_step(self, current_time:float, step_size:float, *, no_set_fmu_state_prior_to_current_point:bool=True):
-        self.time = current_time + step_size
+    def do_step(self,
+                current_communication_point:float,
+                communication_step_size:float,
+                no_set_fmu_state_prior_to_current_point:bool):
+        self.time = current_communication_point + communication_step_size
         if not self.event_mode_used:
-            self.histogram.append( (current_time, self.output))
+            self.histogram.append( (current_communication_point, self.output))
             self.output = self.calc()
         return Fmi3StepResult(eventHandlingNeeded = False, lastSuccessfullTime = self.time)
     
@@ -139,9 +141,9 @@ class Function(Fmi3Slave):
         if before_update != after_update:
             self.output = after_update
             # make sure that all inputs are updated and loops are managed.
-            return Fmi3UpdateDiscreteStatesResult( discreteStatesNeedUpdate=True) 
+            return UpdateDiscreteStatesResult( discrete_states_need_update=True) 
         else:
-            return Fmi3UpdateDiscreteStatesResult()
+            return UpdateDiscreteStatesResult()
 
 if __name__ == "__main__":
     from pathlib import Path

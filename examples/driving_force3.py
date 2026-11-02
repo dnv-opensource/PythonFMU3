@@ -32,10 +32,9 @@ class DrivingForce(Fmi3Slave):
     """A driving force in 3 dimensions which produces an ouput per time and can be connected to the oscillator."""
 
     def __init__(self, **kwargs: Any):
-        kwargs.update({'model_options_cs' : Fmi3ModelOptionsCS(canHandleVariableCommunicationStepSize = True,
-                                                               mightReturnEarlyFromDoStep = False,
-                                                               hasEventMode = False),
-                       'model_options_me' : None,
+        kwargs.update({'model_options_cs' : Fmi3ModelOptionsCS(**{'canHandleVariableCommunicationStepSize':True,
+                                                                  'mightReturnEarlyFromDoStep':False,
+                                                                  'hasEventMode':False}),
                        })
         super().__init__(**kwargs)
         self.log(f"FMU instantiating: visible:{self.visible}, use events?{self.event_mode_used}")
@@ -86,10 +85,10 @@ class DrivingForce(Fmi3Slave):
                                        start="0.0 0.0 0.0"))
 
     def do_step(self,
-                current_time: float,
-                step_size: float,
+                current_communication_point: float,
+                communication_step_size: float,
                 no_set_fmu_state_prior_to_current_point:bool=True) -> Fmi3StepResult:
-        self.time = current_time + step_size
+        self.time = current_communication_point + communication_step_size
         self.f = self.func(self.time)
         ret = Fmi3StepResult(eventHandlingNeeded = False,
                              lastSuccessfullTime = self.time)

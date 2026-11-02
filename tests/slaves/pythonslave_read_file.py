@@ -1,11 +1,9 @@
-from pythonfmu3.fmi3slave import (
-    DefaultExperiment,
-    Float64,
-    Fmi3Causality,
-    Fmi3Slave,
-    Fmi3Variability,
-    String,
-)
+from pythonfmu3.fmi3slave import Float64, Fmi3Slave, String
+
+from pythonfmu3.default_experiment import DefaultExperiment
+from pythonfmu3.enums import Fmi3Causality, Fmi3Variability
+
+from pythonfmu3.model_returns import Fmi3StepResult
 
 
 class PythonSlaveReadFile(Fmi3Slave):
@@ -14,7 +12,7 @@ class PythonSlaveReadFile(Fmi3Slave):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        with open(f"{self.resources}/hello.txt", "r") as file:
+        with open(f"{self.resources}/hello.txt") as file:
             data = file.read()
 
         self.time = 0
@@ -35,5 +33,8 @@ class PythonSlaveReadFile(Fmi3Slave):
             )
         )
 
-    def do_step(self, current_time, step_size):
-        return True
+    def do_step(self,
+                currentCommunicationPoint: float,
+                communicationStepSize: float,
+                noSetFMUStatePriorToCurrentPoint: bool):
+        return Fmi3StepResult()

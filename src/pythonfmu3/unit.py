@@ -27,6 +27,7 @@ class BaseUnit:
         """Convert the variable to XML node.
 
         Returns
+        -------
             xml.etree.ElementTree.Element: XML node
         """
         attrib = dict()
@@ -54,6 +55,7 @@ class Unit:
         """Convert the variable to XML node.
 
         Returns
+        -------
             xml.etree.ElementTree.Element: XML node
         """
         attrib = dict()

@@ -29,9 +29,7 @@ Co-simulation FMUs support various variable types and causalities:
 <!-- skip-test -->
 ```python
 # Input variables (set by master algorithm)
-self.register_variable(
-    Float64("input_signal", causality=Fmi3Causality.input, start=0.0)
-)
+self.register_variable(Float64("input_signal", causality=Fmi3Causality.input, start=0.0))
 
 # Output variables (read by master algorithm)
 self.register_variable(Float64("output_signal", causality=Fmi3Causality.output))
@@ -51,6 +49,7 @@ self.register_variable(
 ### PID Controller Example
 ```python
 from pythonfmu3 import Fmi3Causality, Fmi3Slave, Float64
+from pythonfmu3.model_returns import Fmi3StepResult
 
 class PIDController(Fmi3Slave):
     """PID Controller implementation"""
@@ -87,7 +86,11 @@ class PIDController(Fmi3Slave):
         self.register_variable(Float64("ki", causality=Fmi3Causality.parameter, start=0.1))
         self.register_variable(Float64("kd", causality=Fmi3Causality.parameter, start=0.01))
 
-    def do_step(self, current_time, step_size):
+    def do_step(self,
+                current_communication_point : float,
+                communication_step_size : float,
+                no_set_fmu_state_prior_to_current_point:bool,
+                ) -> Fmi3StepResult:
         # Calculate error
         error = self.setpoint - self.measurement
 
@@ -95,7 +98,7 @@ class PIDController(Fmi3Slave):
         p_term = self.kp * error
 
         # Integral term
-        self.integral_error += error * step_size
+        self.integral_error += error * communication_step_size
         i_term = self.ki * self.integral_error
 
         # Derivative term
@@ -103,7 +106,7 @@ class PIDController(Fmi3Slave):
             d_term = 0.0
             self.first_step = False
         else:
-            d_term = self.kd * (error - self.previous_error) / step_size
+            d_term = self.kd * (error - self.previous_error) / communication_step_size
 
         # PID output
         self.output = p_term + i_term + d_term
@@ -136,26 +139,20 @@ self.register_variable(Float64("v", causality=Fmi3Causality.output, start=0, var
 If numpy is installed, arrays may be used with,
 
 ```python
-from pythonfmu3 import (
-    Fmi3Causality,
-    Fmi3Variability,
-    Fmi3Slave,
-    Float64,
-    UInt64,
-    Fmi3Initial,
-    Dimension,
-)
 import numpy as np
 
+from pythonfmu3 import Dimension, Float64, Fmi3Causality, Fmi3Slave, Fmi3Variability
 
-class LinearTransform(Fmi3Slave):
+
+class LinearTransform2x2(Fmi3Slave):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
         self.author = "..."
-        self.description = "LinearTransform"
+        self.description = "Linear transform with fixed size matrix/vector"
 
         self.time = 0.0
+
         self.m = 2
         self.n = 2
 
@@ -164,7 +161,7 @@ class LinearTransform(Fmi3Slave):
         self.u = np.array([1.0, 2.0]).reshape((self.m, 1))
         self.offset = np.array([1.0, 2.0]).reshape((self.m, 1))
         self.A = np.array([1.0, 1.0, 2.0, 1.0]).reshape((self.m, self.n))
-        self.y = np.array([0.0, 0.0]).reshape((self.m, 1))
+        self.y = np.array([0.0, 0.0]).reshape((self.n, 1))
 
         self.register_variable(
             Float64(
@@ -174,28 +171,18 @@ class LinearTransform(Fmi3Slave):
             )
         )
         self.register_variable(
-            UInt64(
-                "m",
-                causality=Fmi3Causality.structuralParameter,
-                variability=Fmi3Variability.tunable,
-                start=2,
-            )
-        )
-        self.register_variable(
             Float64("scalar", causality=Fmi3Causality.input, start=2.0)
         )
         self.register_variable(
             Float64(
-                "u",
-                causality=Fmi3Causality.input,
-                dimensions=[Dimension(start=f"{self.n}")],
+                "u", causality=Fmi3Causality.input, dimensions=[Dimension(start="2")]
             )
         )
         self.register_variable(
             Float64(
                 "offset",
                 causality=Fmi3Causality.input,
-                dimensions=[Dimension(start=f"{self.m}")],
+                dimensions=[Dimension(start="2")],
             )
         )
         self.register_variable(
@@ -203,18 +190,19 @@ class LinearTransform(Fmi3Slave):
                 "A",
                 causality=Fmi3Causality.parameter,
                 variability=Fmi3Variability.tunable,
-                dimensions=[Dimension(start=f"{self.m}"), Dimension(start=f"{self.n}")],
+                dimensions=[Dimension(start="2"), Dimension(start="2")],
             )
         )
         self.register_variable(
             Float64(
-                "y",
-                causality=Fmi3Causality.output,
-                dimensions=[Dimension(valueReference="1")],
+                "y", causality=Fmi3Causality.output, dimensions=[Dimension(start="2")]
             )
         )
 
-    def do_step(self, current_time, step_size):
+    def do_step(self,
+                current_communication_point : float,
+                communication_step_size : float,
+                no_set_fmu_state_prior_to_current_point : bool):
         self.y = self.scalar * self.A.dot(self.u) + self.offset
         return True
 ```

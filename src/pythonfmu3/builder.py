@@ -1,7 +1,6 @@
-"""Python FMU builder"""
+"""Python FMU builder."""
 
 import argparse
-import importlib
 import itertools
 import logging
 import re
@@ -10,28 +9,29 @@ import sys
 import tempfile
 import zipfile
 from collections.abc import Iterable
+from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
-from typing import Union
-from xml.dom.minidom import parseString
 from xml.etree.ElementTree import Element, tostring
+
+from defusedxml.minidom import parseString
 
 from pythonfmu3.fmi3slave import Fmi3SlaveBase
 from pythonfmu3.model_options import Fmi3ModelOptionsCS, Fmi3ModelOptionsME
 
 from .osutil import get_lib_extension, get_platform
 
-FilePath = Union[str, Path]
+FilePath = str | Path
 HERE = Path(__file__).parent
 
 logger = logging.getLogger(__name__)
 
 
 def get_class_name(file_name: Path) -> str:
-    with open(str(file_name), "r") as file:
+    with Path.open(file_name) as file:
         data = file.read()
-        return re.search(
-            r"class (\w+)\(([^)]*\bFmi3Slave(?:Base)?\b[^)]*)\)\s*:", data
-        ).group(1)
+        found = re.search(r"class (\w+)\(([^)]*\bFmi3Slave(?:Base)?\b[^)]*)\)\s*:", data)
+        assert found is not None, "Class name could not be extracted."
+        return found.group(1)
 
 
 def get_model_description(filepath: Path, module_name: str) -> tuple[str, Element]:
@@ -41,121 +41,114 @@ def get_model_description(filepath: Path, module_name: str) -> tuple[str, Elemen
         filepath (pathlib.Path) : script file path
         module_name (str) : python module to load
 
-    Returns:
-        Tuple[str, xml.etree.TreeElement.Element] : FMU model name, model description
+    Returns
+    -------
+        FMU model name, model description as xml element
     """
     # Add current folder to handle local dependencies
     sys.path.insert(0, str(filepath.parent))
     try:
         # Import the user interface
-        spec = importlib.util.spec_from_file_location(module_name, filepath)
-        fmu_interface = importlib.util.module_from_spec(spec)
+        spec = spec_from_file_location(module_name, filepath)
+        assert spec is not None, f"Spec could not be imported from module {module_name}, path {filepath}"
+        fmu_interface = module_from_spec(spec)
+        assert fmu_interface is not None, f"Intrface could not be imported from spec {spec}"
+        assert spec.loader is not None, f"No loader for spec {spec} found."
         spec.loader.exec_module(fmu_interface)
         # Instantiate the interface
         class_name = get_class_name(filepath)
-        instance = getattr(fmu_interface, class_name)(
-            instance_name="dummyInstance", resources=str(filepath.parent)
-        )
+        instance = getattr(fmu_interface, class_name)(instanceName="dummyInstance", resources=str(filepath.parent))
         model_options_cs = instance.model_options_cs.to_dict()
     finally:
         sys.path.remove(str(filepath.parent))  # remove inserted temporary path
 
     if not isinstance(instance, Fmi3SlaveBase):
-        raise TypeError(
-            f"The provided class '{class_name}' does not inherit from {Fmi3SlaveBase.__qualname__}"
-        )
+        raise TypeError(f"The provided class '{class_name}' does not inherit from {Fmi3SlaveBase.__qualname__}")
     # Produce the xml
-    return instance.modelName, instance.to_xml(model_options_cs)
+    _xml : Element = instance.to_xml(model_options_cs)
+    assert instance.modelName is not None, "Need an instance and modelName at this point"
+    return (instance.modelName, _xml)
 
 
 class FmuBuilder:
     @staticmethod
-    def build_FMU(
+    def build_FMU( # noqa: PLR0915, PLR0912, C901 ## should be simplified!
         script_file: FilePath,
         dest: FilePath = ".",
         project_files: Iterable[FilePath] = set(),
         documentation_folder: FilePath | None = None,
         terminals: FilePath | None = None,
-        **options,
+        options: dict[str, bool|int|float|None] | None = None,
     ) -> Path:
-        script_file = Path(script_file)
-        if not script_file.exists():
-            raise ValueError(f"No such file {script_file!s}")
-        if not script_file.suffix.endswith(".py"):
-            raise ValueError(f"File {script_file!s} must have extension '.py'!")
+        _script_file = Path(script_file)
+        if not _script_file.exists():
+            raise ValueError(f"No such file {_script_file}")
+        if not _script_file.suffix.endswith(".py"):
+            raise ValueError(f"File {_script_file} must have extension '.py'!")
 
-        dest = Path(dest)
-        if not dest.exists():
-            dest.mkdir(parents=True)
-        project_files = set(map(Path, project_files))
+        _dest = Path(dest)
+        if not _dest.exists():
+            _dest.mkdir(parents=True)
+        _project_files = set(map(Path, project_files))
 
         if documentation_folder is not None:
             documentation_folder = Path(documentation_folder)
             if not documentation_folder.exists():
-                raise ValueError(
-                    f"The documentation folder does not exists {documentation_folder!s}"
-                )
+                raise ValueError(f"The documentation folder does not exists {documentation_folder!s}")
 
         if terminals is not None:
             terminals = Path(terminals)
             if not terminals.exists():
-                raise ValueError(
-                    f"The specified terminalsAndIcons file does not exists {terminals!s}"
-                )
+                raise ValueError(f"The specified terminalsAndIcons file does not exists {terminals!s}")
             if not terminals.name == "terminalsAndIcons.xml":
                 raise ValueError(
                     f"Incorrect terminal name {terminals!s}. Terminal file must be named terminalsAndIcons.xml"
                 )
 
-        module_name = script_file.stem
+        module_name = _script_file.stem
 
         with tempfile.TemporaryDirectory(prefix="pythonfmu_") as tempd:
             temp_dir = Path(tempd)
-            shutil.copy2(script_file, temp_dir)
+            shutil.copy2(_script_file, temp_dir)
 
             # Embed pythonfmu in the FMU so it does not need to be included
             dep_folder = temp_dir / "pythonfmu3"
             dep_folder.mkdir()
-            for dep in HERE.glob(
-                "*.py"
-            ):  # Find all python files at the same level as this one
+            for dep in HERE.glob("*.py"):  # Find all python files at the same level as this one
                 shutil.copy2(dep, dep_folder)
-            for file_ in project_files:
-                if file_ == script_file.parent:
+            for file_ in _project_files:
+                if file_ == _script_file.parent:
                     new_folder = temp_dir / file_.name
                     new_folder.mkdir()
                     for f in file_.iterdir():
                         if f.is_dir():
                             temp_dest = new_folder / f.name
                             shutil.copytree(f, temp_dest)
-                        elif f.name != script_file.name:
+                        elif f.name != _script_file.name:
                             shutil.copy2(f, new_folder)
                         else:
-                            logger.debug(
-                                "Skip file with the same name as the script found in project file."
-                            )
+                            logger.debug("Skip file with the same name as the script found in project file.")
+                elif file_.is_dir():
+                    temp_dest = temp_dir / file_.name
+                    shutil.copytree(file_, temp_dest)
                 else:
-                    if file_.is_dir():
-                        temp_dest = temp_dir / file_.name
-                        shutil.copytree(file_, temp_dest)
-                    else:
-                        shutil.copy2(file_, temp_dir)
+                    shutil.copy2(file_, temp_dir)
 
-            model_identifier, xml = get_model_description(temp_dir.absolute() / script_file.name, module_name)
+            model_identifier, xml = get_model_description(temp_dir.absolute() / _script_file.name, module_name)
 
-            dest_file = dest / f"{model_identifier}.fmu"
+            dest_file = _dest / f"{model_identifier}.fmu"
 
             type_node = xml.find("CoSimulation")
             cs_option_names = list(Fmi3ModelOptionsCS().to_dict().keys())
-            if type_node is not None and 'options' in options:
-                for option, value in options['options'].items():
+            if type_node is not None and options is not None:
+                for option, value in options.items():
                     if option in cs_option_names:
                         type_node.set(option, str(value).lower())
 
             type_node = xml.find("ModelExchange")
             me_option_names = list(Fmi3ModelOptionsME().to_dict().keys())
-            if type_node is not None and 'options' in options:
-                for option, value in options['options'].items():
+            if type_node is not None and options is not None:
+                for option, value in options.items():
                     if option in me_option_names:
                         type_node.set(option, str(value).lower())
 
@@ -174,9 +167,7 @@ class FmuBuilder:
                 # Add FMI API wrapping Python class source
                 sources = Path("sources")
                 src = HERE / "pythonfmu-export"
-                for f in itertools.chain(
-                    src.rglob("*.hpp"), src.rglob("*.cpp"), src.rglob("CMakeLists.txt")
-                ):
+                for f in itertools.chain(src.rglob("*.hpp"), src.rglob("*.cpp"), src.rglob("CMakeLists.txt")):
                     relative_f = f.relative_to(src)
                     if "build" in relative_f.parts:
                         continue
@@ -191,11 +182,7 @@ class FmuBuilder:
                     src_binaries.rglob("*.dylib"),
                 ):
                     relative_f = f.relative_to(src_binaries)
-                    arcname = (
-                        binaries
-                        / relative_f.parent
-                        / f"{model_identifier}{relative_f.suffix}"
-                    )
+                    arcname = binaries / relative_f.parent / f"{model_identifier}{relative_f.suffix}"
                     zip_fmu.write(f, arcname=arcname)
 
                 # Add the documentation folder
@@ -207,32 +194,27 @@ class FmuBuilder:
                             zip_fmu.write(f, arcname=(documentation / relative_f))
 
                 if terminals is not None:
-                    terminalsFolder = Path("terminalsAndIcons")
+                    terminals_folder = Path("terminalsAndIcons")
                     relative_f = terminals.relative_to(terminals.parent)
-                    zip_fmu.write(f, arcname=(terminalsFolder / relative_f))
+                    zip_fmu.write(f, arcname=(terminals_folder / relative_f))
 
                 # Add the model description
-                xml_str = parseString(tostring(xml, "UTF-8"))
-                zip_fmu.writestr(
-                    "modelDescription.xml", xml_str.toprettyxml(encoding="UTF-8")
-                )
+                _xml = tostring(xml, "UTF-8")
+                xml_str = parseString(_xml)
+                zip_fmu.writestr("modelDescription.xml", xml_str.toprettyxml(encoding="UTF-8"))
 
             return dest_file
 
     @staticmethod
     def has_binary() -> bool:
-        """Does the binary for this platform exits?"""
+        """Check the existence of the binary for this platform."""
         binary_folder = get_platform()
-        lib_ext = (
-            get_lib_extension() or "*"
-        )  # if library extension is unknown, it will look for '*.*' in src_binaries
+        lib_ext = get_lib_extension() or "*"  # if library extension is unknown, it will look for '*.*' in src_binaries
         src_binaries = HERE / "resources" / "binaries" / binary_folder
-        return (
-            src_binaries.exists() and len(list(src_binaries.glob(f"*.{lib_ext}"))) >= 1
-        )
+        return src_binaries.exists() and len(list(src_binaries.glob(f"*.{lib_ext}"))) >= 1
 
 
-def create_command_parser(parser: argparse.ArgumentParser):
+def create_command_parser(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "-f",
         "--file",
@@ -241,9 +223,7 @@ def create_command_parser(parser: argparse.ArgumentParser):
         required=True,
     )
 
-    parser.add_argument(
-        "-d", "--dest", dest="dest", help="Where to save the FMU.", default="."
-    )
+    parser.add_argument("-d", "--dest", dest="dest", help="Where to save the FMU.", default=".")
 
     parser.add_argument(
         "--doc",
@@ -262,30 +242,22 @@ def create_command_parser(parser: argparse.ArgumentParser):
     # Boolean options are added using their FMI name, making them implicitly True.
     # For other options their (non-default) number is added after a space.
     for name, default in Fmi3ModelOptionsCS().to_dict().items():
-        if default in (True,False):
+        if default in (True, False):
+            parser.add_argument(f"--{name}", dest=name, help=f"If given, {name}={not default}", action="store_true")
+        elif name in ("fixedInternalStepSize", "maxOutputDerivativeOrder", "recommendedIntermediateInputSmoothness"):
             parser.add_argument(
                 f"--{name}",
                 dest=name,
-                help=f"If given, {name}={not default}",
-                action="store_true"
+                help=f"If given, {name}= number",
             )
-        elif name in ("fixedInternalStepSize", "maxOutputDerivativeOrder", "recommendedIntermediateInputSmoothness"):
-            parser.add_argument(f"--{name}", dest=name,
-                                help=f"If given, {name}= number",
-                                )
         else:
             raise ValueError(f"Something wrong with option {name}, default:{default}") from None
 
     cs_keys = list(Fmi3ModelOptionsCS().to_dict().keys())
     for name, default in Fmi3ModelOptionsME().to_dict().items():
         if name not in cs_keys:
-            if default in (True,False):
-                parser.add_argument(
-                    f"--{name}",
-                    dest=name,
-                    help=f"If given, {name}={not default}",
-                    action="store_true"
-                )
+            if default in (True, False):
+                parser.add_argument(f"--{name}", dest=name, help=f"If given, {name}={not default}", action="store_true")
             else:
                 raise ValueError(f"Something wrong with option {name}, default:{default}") from None
 

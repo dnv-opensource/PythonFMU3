@@ -34,7 +34,7 @@ All changes where implemented in the branch *eis*
 * Minor updates within the example FMUs to support discrete_event mode
 * Added a CHANGELOG.md file to the package and included this point list from the git commit messages.
 * Fixed findings from verification. Mainly PySlaveInstance.cpp fixes and adaptations in some .py files. test_cli.py has been removed, since it needs complete re-write
-* Changed eventModeUsed -> event_mode_used and earlyReturnAllowed -> early_return_allowed within Python. All examples and tests adapted.
+* One step towards satisfying ruff, mypy and pyright. Still there are a lot of comments. All tests are working.
 
 
 

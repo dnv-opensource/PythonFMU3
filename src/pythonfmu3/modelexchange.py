@@ -1,5 +1,5 @@
 from abc import ABC, ABCMeta, abstractmethod
-from dataclasses import dataclass
+
 from pythonfmu3.model_returns import Fmi3UpdateDiscreteStatesResult
 
 
@@ -11,9 +11,7 @@ class RequireTimeMeta(ABCMeta):
         def new_init(self, *args, **kwargs):
             orig_init(self, *args, **kwargs)
             if not hasattr(self, "time"):
-                raise AttributeError(
-                    f"{cls.__name__} must define 'self.time' in __init__"
-                )
+                raise AttributeError(f"{cls.__name__} must define 'self.time' in __init__")
 
         cls.__init__ = new_init
 

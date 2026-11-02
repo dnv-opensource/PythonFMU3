@@ -9,10 +9,9 @@
 import logging
 import numpy as np
 from pythonfmu3 import Fmi3Slave
-from pythonfmu3.cosimulation import Fmi3StepResult
 from pythonfmu3.enums import Fmi3IntervalVariability, Fmi3Causality, Fmi3Status
 from pythonfmu3.variables import Boolean, Float64, Int32, Clock
-from pythonfmu3.model_returns import Fmi3UpdateDiscreteStatesResult
+from pythonfmu3.model_returns import Fmi3StepResult, UpdateDiscreteStatesResult
 from pythonfmu3.model_options import Fmi3ModelOptionsCS
 
 LOGGER = logging.getLogger(__name__)
@@ -22,12 +21,13 @@ EPS = 1e-14
 class TwoState(Fmi3Slave):
     """Two-state discrete event implementation"""
 
-    def __init__(self, **kwargs):
-        kwargs.update({'model_options_cs' : Fmi3ModelOptionsCS(canHandleVariableCommunicationStepSize = True,
-                                                               mightReturnEarlyFromDoStep = True,
-                                                               hasEventMode = True),
-                       'model_options_me' : None,
-                       })
+    def __init__(self,
+                 model_options_cs = Fmi3ModelOptionsCS(**{'canHandleVariableCommunicationStepSize':True,
+                                                                  'mightReturnEarlyFromDoStep':True,
+                                                                  'hasEventMode':True}),
+                 **kwargs
+                ):
+        kwargs.update({'model_options_cs' : model_options_cs})
         super().__init__(**kwargs)
         self.log(f"FMU instantiating: visible:{self.visible}, use events?{self.event_mode_used}")
         self.author = "Siegfried Eisinger"
@@ -84,26 +84,43 @@ class TwoState(Fmi3Slave):
         # print(f"EnterStepMode @{self.time}")
         pass
 
+    def enter_initialization_mode(
+        self, tolerance: float | None = None, start_time: float = 0.0, stop_time: float | None = None
+    ) -> None:
+        self.log(f"enter_initialization_mode(tolerance={tolerance}, start_time={start_time}, stop_time={stop_time}")
+        
     def exit_initialization_mode(self):
-        self.log(f"Initialization finished. hasEventMode:{self.model_options_cs.hasEventMode}. UseEvents? {getattr(self, 'event_mode_used', False)}")
+        txt = f"Initialization finished. hasEventMode:{self.model_options_cs['hasEventMode']}."
+        txt += f"UseEvents? {getattr(self, 'event_mode_used', False)}"
+        self.log(txt)
         self.rng = np.random.default_rng(self.seed)
 
 
-    def do_step(self, current_time:float, step_size:float, *, no_set_fmu_state_prior_to_current_point:bool=True):
-        self.time = current_time + step_size
-        self.histogram.append( (current_time, self.state))
+    def do_step(self,
+                current_communication_point:float,
+                communication_step_size:float,
+                no_set_fmu_state_prior_to_current_point:bool
+                ) -> Fmi3StepResult:
+        self.time = current_communication_point + communication_step_size
+        self.histogram.append( (current_communication_point, self.state))
         if self.time >= self.next_time-EPS:
             if not self.event_mode_used:
                 _ = self.update_discrete_states()
                 ret = Fmi3StepResult(eventHandlingNeeded = False,
                                      lastSuccessfullTime = self.time)                
+                #ret = StepResult(event_handling_needed = False,
+                #                 last_successfull_time = self.time)                
             else:
                 ret = Fmi3StepResult(eventHandlingNeeded = True,
                                      lastSuccessfullTime = self.next_time)
-            #print(f"DoStep@{current_time}: {ret}")
+                #ret = StepResult(event_handling_needed = True,
+                #                 last_successfull_time = self.next_time)
         else:
             ret = Fmi3StepResult(eventHandlingNeeded = False,
                                  lastSuccessfullTime = self.time)
+            #ret = StepResult(event_handling_needed = False,
+            #                 last_successfull_time = self.time)
+        #self.log(f"DoStep@{current_communication_point}: {ret}")
         return ret
     
     def update_discrete_states(self):
@@ -128,10 +145,13 @@ class TwoState(Fmi3Slave):
         self.state = 1 if self.time == 0.0 else 1 - self.state
         self.next_interval = self.get_next_interval()
         self.next_time = self.time + self.next_interval
-        # self.log(f"Update {self.instance_name}(TwoState) @{self.time} => {self.state}. NextT:{self.next_time}")            
-        return Fmi3UpdateDiscreteStatesResult(discreteStatesNeedUpdate=True,
-                                              nextEventTimeDefined=True,
-                                              nextEventTime=self.next_time)
+        #self.log(f"Update {self.instance_name}(TwoState) @{self.time} => {self.state}. NextT:{self.next_time}")            
+#         return Fmi3UpdateDiscreteStatesResult(discreteStatesNeedUpdate=True,
+#                                               nextEventTimeDefined=True,
+#                                               nextEventTime=self.next_time)
+        return UpdateDiscreteStatesResult(discrete_states_need_update=True,
+                                          next_event_time_defined=True,
+                                          next_event_time=self.next_time)
 
 
 if __name__ == "__main__":

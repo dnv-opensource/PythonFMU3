@@ -34,8 +34,7 @@ def var_names(var_type, causality):
 def init_var(var_type, causality, array=True):
     if array:
         return np.zeros(SIZE, dtype=TYPE_MAP[var_type])
-    else:
-        return TYPE_MAP[var_type]()
+    return TYPE_MAP[var_type]()
 
 
 def create_vars(self):
@@ -98,6 +97,9 @@ class ArrayTypes(Fmi3Slave):
 
         generate_data(self)
 
-    def do_step(self, current_time: float, step_size: float) -> Fmi3Status:
+    def do_step(self,
+                currentCommunicationPoint: float,
+                communicationStepSize: float,
+                noSetFMUStatePriorToCurrentPoint: bool) -> Fmi3Status:
         generate_data(self)
         return True

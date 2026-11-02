@@ -58,7 +58,7 @@ class Dahlquist(Fmi3SlaveBase, ModelExchange, CoSimulation):
         self.derx = -self.k * self.x
         return [self.derx]
 
-    def do_step(self, current_time: float, step_size: float) -> Fmi3StepResult:
+    def do_step(self, current_communication_point: float, communication_step_size: float) -> Fmi3StepResult:
         self.derx = -self.k * self.x
-        self.x += self.derx * step_size
+        self.x += self.derx * communication_step_size
         return True

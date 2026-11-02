@@ -49,15 +49,11 @@ def deploy(
                     manager = manager or ENVIRONMENT_FILES[spec]
                     break
             if environment_file is None:
-                raise ValueError(
-                    "Unable to find requirement file in the FMU resources folder."
-                )
+                raise ValueError("Unable to find requirement file in the FMU resources folder.")
         else:
             environment_file = Path("resources") / environment
             if environment_file.as_posix() not in names:
-                raise ValueError(
-                    f"Unable to find requirement file {environment!s} in the FMU resources folder."
-                )
+                raise ValueError(f"Unable to find requirement file {environment!s} in the FMU resources folder.")
 
             if manager is None:
                 if environment in ENVIRONMENT_FILES:
@@ -104,9 +100,7 @@ def deploy(
 
 def create_command_parser(parser: argparse.ArgumentParser):
 
-    parser.add_argument(
-        "-f", "--file", dest="fmu", help="Path to the Python FMU.", required=True
-    )
+    parser.add_argument("-f", "--file", dest="fmu", help="Path to the Python FMU.", required=True)
 
     parser.add_argument(
         "-e",

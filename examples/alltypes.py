@@ -58,7 +58,7 @@ class AllTypes(Fmi3Slave):
 
         create_vars(self)
 
-    def do_step(self, current_time: float, step_size: float) -> Fmi3Status:
+    def do_step(self, current_communication_point: float, communication_step_size: float) -> Fmi3Status:
         # feedthrough
         for var_type in TYPES:
             input_var = getattr(self, var_names(var_type, Fmi3Causality.input))

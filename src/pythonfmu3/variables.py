@@ -1,15 +1,20 @@
 """Classes describing interface variables."""
 
+from __future__ import annotations
 import importlib
 from abc import ABC
 from collections import ChainMap
 from collections.abc import Iterable
 from enum import Enum
 from functools import reduce
-from typing import Any
+import numpy as np
+from typing import Any, TypeAlias
+import sys
 from xml.etree.ElementTree import Element
 
-from .enums import Fmi3Causality, Fmi3Initial, Fmi3Variability, Fmi3IntervalVariability
+from .enums import Fmi3Causality, Fmi3Initial, Fmi3IntervalVariability, Fmi3Variability
+
+FMIScalar : TypeAlias = np.generic | bool | int | float | str
 
 MAX_LENGTH = 1000
 
@@ -26,10 +31,41 @@ def check_numpy():
     try:
         importlib.import_module("numpy")
     except ModuleNotFoundError:
-        raise ModuleNotFoundError(
-            "Numpy is not installed, it is required for Array support"
-        )
+        raise ModuleNotFoundError("Numpy is not installed, it is required for Array support")
 
+py_types: dict[str, type] = {
+    "Real": float,
+    "Integer": int,
+    "Boolean": bool,
+    "String": str,
+    "Float32": np.float32,
+    "Float64": np.float64,
+    "Int8": np.int8,
+    "UInt8": np.uint8,
+    "Int16": np.int16,
+    "Uint16": np.uint16,
+    "Int32": np.int32,
+    "UInt32": np.uint32,
+    "Int64": np.int64,
+    "UInt64": np.uint64,
+    "Enumeration": int,
+    "Clock": bool,
+}
+
+def fmi_type_version( fmi_type_name:str, fmi_version:int=3) -> bool:
+    """Check whether the FMI type is valid in the given FMI version."""
+    if fmi_type_name not in py_types:
+        return False
+    if fmi_version < 3 and fmi_type_name in ("Real", "Integer", "Boolean", "String", "Enumeration"):
+        return True
+    if  fmi_version == 3 and fmi_type_name not in ("Real", "Integer"):
+        return True
+    return False
+
+
+def fmi_type( fmi_type_name:str):
+    """Get the fmi type object from the fmi type str."""
+    return getattr( sys.modules[__name__], fmi_type_name)
 
 class ModelVariable(ABC):
     """Abstract FMI model variable definition.
@@ -56,12 +92,12 @@ class ModelVariable(ABC):
         declared_type: str | None = None,
         getter: Any = None,
         setter: Any = None,
-        can_handle_multiple_set_per_time_instant: bool = True
+        can_handle_multiple_set_per_time_instant: bool = True,
     ):
         self.getter = getter
         self.setter = setter
         self._type = None
-        self.local_name = name.split(".")[-1]
+        self.local_name = name.rsplit(".", maxsplit=1)[-1]
 
         # demanagle names
         self.local_name = self.local_name.lstrip("_")
@@ -85,7 +121,7 @@ class ModelVariable(ABC):
 
     @property
     def description(self) -> str | None:
-        """str or None: Variable description - None if not set"""
+        """Str or None: Variable description - None if not set"""
         return self.__attrs["description"]
 
     @property
@@ -125,25 +161,26 @@ class ModelVariable(ABC):
         """:obj:`Fmi3Variability` or None: Variable variability - None if not set"""
         return self.__attrs["variability"]
 
-    @staticmethod
-    def requires_start(v: "ModelVariable") -> bool:
+    def requires_start(self) -> bool:
         """Test if a variable requires a start attribute
 
-        Returns:
+        Returns
+        -------
             True if successful, False otherwise
         """
         return (
-            v.initial == Fmi3Initial.exact
-            or v.initial == Fmi3Initial.approx
-            or v.causality == Fmi3Causality.input
-            or v.causality == Fmi3Causality.parameter
-            or v.variability == Fmi3Variability.constant
+            self.initial == Fmi3Initial.exact
+            or self.initial == Fmi3Initial.approx
+            or self.causality == Fmi3Causality.input
+            or self.causality == Fmi3Causality.parameter
+            or self.variability == Fmi3Variability.constant
         )
 
     def to_xml(self) -> Element:
         """Convert the variable to XML node.
 
         Returns
+        -------
             xml.etree.ElementTree.Element: XML node
         """
         attrib = dict()
@@ -151,25 +188,21 @@ class ModelVariable(ABC):
             if value is not None:
                 attrib[key] = ModelVariable.to_str(value)
         return Element(self._type, attrib)
-    
+
     @staticmethod
-    def to_str(val:Any):
+    def to_str(val: Any):
         """Helper method to translate python values to proper strings for use in xml."""
         if isinstance(val, bool):
             return str(val).lower()
-        elif isinstance(val, float):
+        if isinstance(val, float):
             return f"{val:.16g}"
-        elif isinstance(val, Enum):
+        if isinstance(val, Enum):
             return val.name
-        else:
-            return str(val)
+        return str(val)
 
     def __repr__(self) -> str:
         return (
-            f"{self.__class__.__name__}"
-            f"(name={self.name}, "
-            f"causality={self.causality}, "
-            f"variability={self.variability})"
+            f"{self.__class__.__name__}(name={self.name}, causality={self.causality}, variability={self.variability})"
         )
 
 
@@ -186,9 +219,7 @@ class Start:
 class Dimension:
     def __init__(self, start: str = "", valueReference: str = ""):
         if start and valueReference and any((start, valueReference)):
-            raise RuntimeError(
-                "start and valueReference attributes are mutally exclusive for Dimension element"
-            )
+            raise RuntimeError("start and valueReference attributes are mutally exclusive for Dimension element")
 
         self.start = start
         self.value_reference = valueReference
@@ -196,16 +227,11 @@ class Dimension:
     def size(self, vars: list[ModelVariable]):
         if self.start:
             return self.start
-        else:
-            result = next(
-                (
-                    value
-                    for vr, value in vars.items()
-                    if vr == int(self.value_reference)
-                ),
-                None,
-            )
-            return result.getter()
+        result = next(
+            (value for vr, value in vars.items() if vr == int(self.value_reference)),
+            None,
+        )
+        return result.getter()
 
     def to_xml(self) -> Element:
         attrib = dict()
@@ -236,8 +262,7 @@ class Arrayable:
             if len(output) > MAX_LENGTH:
                 output = output[0]
             return output
-        else:
-            return formatter(value)
+        return formatter(value)
 
     def dimensions_xml(self) -> list[Element]:
         return [dim.to_xml() for dim in self._dimensions]
@@ -301,6 +326,13 @@ class Float64(ModelVariable, Arrayable):
 
         return parent
 
+class Float32(Float64):
+    def __init__(
+        self,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        self._type = "Float32"
 
 class Int32(ModelVariable, Arrayable):
     def __init__(
@@ -368,6 +400,24 @@ class Int64(ModelVariable, Arrayable):
         parent.extend(self.dimensions_xml())
 
         return parent
+#
+class Int8(Int32):
+    def __init__(
+        self,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        self._type = "Int8"
+
+class Int16(Int32):
+    def __init__(self,**kwargs):
+        super().__init__(**kwargs)
+        self._type = "Int16"
+
+# class Int64(Int32):
+#     def __init__(self,**kwargs):
+#         super().__init__(**kwargs)
+#         self._type = "Int64"
 
 
 class UInt64(ModelVariable, Arrayable):
@@ -402,6 +452,30 @@ class UInt64(ModelVariable, Arrayable):
         parent.extend(self.dimensions_xml())
 
         return parent
+
+class UInt8(UInt64):
+    def __init__(
+        self,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        self._type = "UInt8"
+
+class UInt16(UInt64):
+    def __init__(
+        self,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        self._type = "UInt16"
+        
+class UInt32(UInt64):
+    def __init__(
+        self,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        self._type = "UInt32"
 
 
 class Boolean(ModelVariable, Arrayable):
@@ -471,6 +545,7 @@ class String(ModelVariable):
             parent.append(self._start.to_xml())
         return parent
 
+
 class Clock(ModelVariable):
     """Clock variable definition. See also fmi3Variable.xsd and fmi3AttributeGroups.xsd/fmi3ClockAttributes
 
@@ -486,33 +561,38 @@ class Clock(ModelVariable):
         interval_counter: optional initial nominator of interval fraction
         shift_counter: optional initial nominator of shift (first clock activation)
     """
+
     def __init__(
         self,
         name: str,
         can_be_deactivated: bool = False,
-        priority: int|None = None,
+        priority: int | None = None,
         interval_variability: Fmi3IntervalVariability = Fmi3IntervalVariability.constant,
-        interval_decimal: float|None = None,
+        interval_decimal: float | None = None,
         shift_decimal: float = 0.0,
         supports_fraction: bool = False,
-        resolution: int|None = None,
-        interval_counter: int|None = None,
+        resolution: int | None = None,
+        interval_counter: int | None = None,
         shift_counter: int = 0,
         **kwargs,
     ):
         ModelVariable.__init__(self, name, **kwargs)
-        self.__attrs = {'canBeDeactivated': can_be_deactivated,
-                        'priority': priority,
-                        'intervalVariability': interval_variability,
-                        'intervalDecimal': interval_decimal,
-                        'shiftDecimal': shift_decimal,
-                        'supportsFraction': supports_fraction,
-                        }
+        self.__attrs = {
+            "canBeDeactivated": can_be_deactivated,
+            "priority": priority,
+            "intervalVariability": interval_variability,
+            "intervalDecimal": interval_decimal,
+            "shiftDecimal": shift_decimal,
+            "supportsFraction": supports_fraction,
+        }
         if supports_fraction:
-            self.__attrs.update( {'resolution': resolution,
-                                  'intervalCounter': interval_counter,
-                                  'shiftCounter': shift_counter,
-                                  })
+            self.__attrs.update(
+                {
+                    "resolution": resolution,
+                    "intervalCounter": interval_counter,
+                    "shiftCounter": shift_counter,
+                }
+            )
         self._type = "Clock"
 
     def to_xml(self) -> Element:
@@ -545,19 +625,19 @@ class Enumeration(ModelVariable, Arrayable):
         return self.__attrs["start"]
 
     @start.setter
-    def start(self, value: float):
+    def start(self, value: float) -> None:
         self.__attrs["start"] = value
 
     @property
-    def declared_type(self) -> Any | None:
+    def declared_type(self) -> str | None:
         return self.__attrs["declaredType"]
 
     @declared_type.setter
-    def declared_type(self, value: float):
+    def declared_type(self, value: str) -> None:
         self.__attrs["declaredType"] = value
 
     def to_xml(self) -> Element:
-        attrib = dict()
+        attrib : dict[str,str] = {}
         for key, value in self.__attrs.items():
             if value is not None:
                 attrib[key] = str(value)
@@ -565,3 +645,23 @@ class Enumeration(ModelVariable, Arrayable):
         parent = super().to_xml()
 
         return parent
+
+# fmi_types: dict[type, Any] = {
+#     #float : Real,
+#     #int : Integer,
+#     bool : Boolean,
+#     str : String,
+#     np.float32 : Float32,
+#     np.float64 : Float64,
+#     np.int8 : Int8,
+#     np.uint8 : UInt8,
+#     np.int16 : Int16,
+#     np.uint16 : UInt16,
+#     np.int32 : Int32,
+#     np.uint32 : UInt32,
+#     np.int64 :Int64,
+#     np.uint64 : UInt64,
+#     # int : Enumeration, ! not unique
+#     # bool : Clock, ! not unique
+# }
+

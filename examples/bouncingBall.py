@@ -15,15 +15,13 @@ LOGGER = logging.getLogger(__name__)
 EPS = 1e-13
 
 class BouncingBall(Fmi3Slave):
-    def __init__(self, **kwargs):
-        kwargs.update({'model_options_cs' : Fmi3ModelOptionsCS(canHandleVariableCommunicationStepSize = True,
-                                                               mightReturnEarlyFromDoStep = True,
-                                                               hasEventMode = True),
-                       'model_options_me' : None,
-                       })
-        
+    def __init__(self,
+                 model_options_cs = Fmi3ModelOptionsCS(**{'canHandleVariableCommunicationStepSize':True,
+                                                          'mightReturnEarlyFromDoStep':True,
+                                                          'hasEventMode':True}),
+                 **kwargs):
+        kwargs.update({'model_options_cs' : model_options_cs})
         super().__init__(**kwargs)
-
         self.log(f"FMU Function instantiating: visible:{self.visible}, use events?{self.event_mode_used}")
         self.author = "..."
         self.description = "Bouncing Ball as FMI3 component with event handling"
@@ -110,18 +108,21 @@ class BouncingBall(Fmi3Slave):
         self.next_bounce = self.time + self.calc_next_bounce()
         self.energy_min = 0.5* self.v_min* self.v_min
 
-    def do_step(self, current_time:float, step_size:float, *, no_set_fmu_state_prior_to_current_point:bool=True):
-        self.time = current_time + step_size
+    def do_step(self,
+                current_communication_point:float,
+                communication_step_size:float,
+                no_set_fmu_state_prior_to_current_point:bool):
+        self.time = current_communication_point + communication_step_size
         assert not self.event_mode_used or self.time < self.next_bounce + EPS, (
             f"Time {self.time} > {self.next_bounce}"
         )
         self.derh = self.v
-        self.h += (self.derh + 0.5*self.derv* step_size)*step_size
-        self.v += self.derv * step_size
+        self.h += (self.derh + 0.5*self.derv* communication_step_size)*communication_step_size
+        self.v += self.derv * communication_step_size
         
-        event_handling_needed: bool = False
+        eventHandlingNeeded: bool = False
         if self.event_mode_used and abs(self.time - self.next_bounce) < EPS:
-            event_handling_needed = True # calculate the next bounce
+            eventHandlingNeeded = True # calculate the next bounce
             
         elif self.h <= 0 and self.v < 0: # when eventMode is not used
             self.h = 1e-12
@@ -130,7 +131,7 @@ class BouncingBall(Fmi3Slave):
         if not self.event_mode_used and 0.5*self.v**2 - self.g*self.h < self.energy_min: # stop the bouncing
             self.v = 0
             self.derv = 0
-        ret = Fmi3StepResult(eventHandlingNeeded = event_handling_needed,
+        ret = Fmi3StepResult(eventHandlingNeeded = eventHandlingNeeded,
                              lastSuccessfullTime = self.time)
         return ret
 

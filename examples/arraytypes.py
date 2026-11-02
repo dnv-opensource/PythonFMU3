@@ -99,6 +99,6 @@ class ArrayTypes(Fmi3Slave):
 
         create_vars(self)
 
-    def do_step(self, current_time: float, step_size: float) -> Fmi3Status:
+    def do_step(self, current_communication_point: float, communication_step_size: float) -> Fmi3Status:
         generate_random_data(self)
         return True

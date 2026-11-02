@@ -1,4 +1,5 @@
 from pythonfmu3 import Fmi3Causality, Fmi3Slave, Float64
+from pythonfmu3.model_returns import Fmi3StepResult
 
 class PIDController(Fmi3Slave):
     """PID Controller implementation"""
@@ -35,7 +36,11 @@ class PIDController(Fmi3Slave):
         self.register_variable(Float64("ki", causality=Fmi3Causality.parameter, start=0.1))
         self.register_variable(Float64("kd", causality=Fmi3Causality.parameter, start=0.01))
 
-    def do_step(self, current_time, step_size):
+    def do_step(self,
+                current_communication_point : float,
+                communication_step_size : float,
+                no_set_fmu_state_prior_to_current_point:bool,
+                ) -> Fmi3StepResult:
         # Calculate error
         error = self.setpoint - self.measurement
 
@@ -43,7 +48,7 @@ class PIDController(Fmi3Slave):
         p_term = self.kp * error
 
         # Integral term
-        self.integral_error += error * step_size
+        self.integral_error += error * communication_step_size
         i_term = self.ki * self.integral_error
 
         # Derivative term
@@ -51,7 +56,7 @@ class PIDController(Fmi3Slave):
             d_term = 0.0
             self.first_step = False
         else:
-            d_term = self.kd * (error - self.previous_error) / step_size
+            d_term = self.kd * (error - self.previous_error) / communication_step_size
 
         # PID output
         self.output = p_term + i_term + d_term

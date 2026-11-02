@@ -40,12 +40,12 @@ public:
     void Reset() override;
 //    cppfmu::FMIStatus DoStep(cppfmu::FMIFloat64 currentCommunicationPoint,
     void DoStep(cppfmu::FMIFloat64 currentCommunicationPoint,
-        cppfmu::FMIFloat64 communicationStepSize,
-        cppfmu::FMIBoolean noSetFMUStatePriorToCurrentPoint,
-        cppfmu::FMIBoolean* eventHandlingNeeded,
-        cppfmu::FMIBoolean* terminateSimulation,
-        cppfmu::FMIBoolean* earlyReturn,
-        cppfmu::FMIFloat64* lastSuccessfullTime) override;
+                cppfmu::FMIFloat64 communicationStepSize,
+                cppfmu::FMIBoolean noSetFMUStatePriorToCurrentPoint,
+                cppfmu::FMIBoolean* eventHandlingNeeded,
+                cppfmu::FMIBoolean* terminateSimulation,
+                cppfmu::FMIBoolean* earlyReturn,
+                cppfmu::FMIFloat64* lastSuccessfullTime) override;
 
     void SetFloat64(const cppfmu::FMIValueReference* vr, std::size_t nvr, const cppfmu::FMIFloat64* value, std::size_t nValues) override;
     void SetInt32(const cppfmu::FMIValueReference* vr, std::size_t nvr, const cppfmu::FMIInt32* value, std::size_t nValues) override;

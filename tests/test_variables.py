@@ -1,3 +1,4 @@
+import xml.etree.ElementTree as ET
 from enum import Enum
 from random import randint
 
@@ -6,6 +7,7 @@ import pytest
 from pythonfmu3 import Fmi3Slave
 from pythonfmu3.enums import Fmi3Causality, Fmi3Initial, Fmi3Variability
 from pythonfmu3.variables import (
+    py_types,
     Boolean,
     Dimension,
     Float64,
@@ -15,8 +17,6 @@ from pythonfmu3.variables import (
     UInt64,
     flatten,
 )
-
-from .utils import PY2FMI, UInt64ValType
 
 MODEL_VARIABLE_ATTRIBUTES = [
     "name",
@@ -62,7 +62,7 @@ def test_ModelVariable_constructor(causality, initial, variability, name, descri
     [
         (Boolean, False),
         (Int32, 22),
-        (UInt64, UInt64ValType(23)),
+        (UInt64, py_types['UInt64'](23)),
         (Float64, 2.0 / 3.0),
         (String, "hello_world"),
     ],
@@ -73,20 +73,15 @@ def test_ModelVariable_getter(fmi_type, value):
         def __init__(self, **kwargs):
             super().__init__(**kwargs)
             self.var = [value]
-            self.register_variable(
-                PY2FMI[type(value)]("var", getter=lambda: self.var[0])
-            )
+            self.register_variable(fmi_type("var", getter=lambda: self.var[0]))
 
         def do_step(self, t, dt):
             return True
 
     fmi_type_name = fmi_type.__qualname__.lower()
 
-    slave = Slave(instance_name="slaveInstance")
-    assert [
-        getattr(val, "value", val)
-        for val in getattr(slave, f"get_{fmi_type_name}")([0])
-    ] == [value]
+    slave = Slave(instanceName="slaveInstance")
+    assert [getattr(val, "value", val) for val in getattr(slave, f"get_{fmi_type_name}")([0])] == [value]
 
 
 @pytest.mark.parametrize(
@@ -94,7 +89,7 @@ def test_ModelVariable_getter(fmi_type, value):
     [
         (Boolean, False),
         (Int32, 22),
-        (UInt64, UInt64ValType(23)),
+        (UInt64, py_types['UInt64'](23)),
         (Float64, 2.0 / 3.0),
         (String, "hello_world"),
     ],
@@ -106,7 +101,7 @@ def test_ModelVariable_setter(fmi_type, value):
             super().__init__(**kwargs)
             self.var = [None]
             self.register_variable(
-                PY2FMI[type(value)](
+                fmi_type(
                     "var",
                     getter=lambda: self.var[0],
                     setter=lambda v: self.var.__setitem__(0, v),
@@ -116,22 +111,12 @@ def test_ModelVariable_setter(fmi_type, value):
         def do_step(self, t, dt):
             return True
 
-    slave = Slave(instance_name="slaveInstance")
+    slave = Slave(instanceName="slaveInstance")
     fmi_type_name = fmi_type.__qualname__.lower()
 
     set_method = getattr(slave, f"set_{fmi_type_name}")
-    set_method(
-        [
-            0,
-        ],
-        [
-            value,
-        ],
-    )
-    assert [
-        getattr(val, "value", val)
-        for val in getattr(slave, f"get_{fmi_type_name}")([0])
-    ] == [value]
+    set_method([0], [value])
+    assert [getattr(val, "value", val) for val in getattr(slave, f"get_{fmi_type_name}")([0])] == [value]
 
 
 @pytest.mark.requirements("numpy")
@@ -149,22 +134,15 @@ def test_ModelVariable_getter_array(fmi_type, value, dims):
             super().__init__(**kwargs)
             self.var = value
             dimensions = [Dimension(start=val) for val in dims]
-            self.register_variable(
-                PY2FMI[type(value[0])](
-                    "var", getter=lambda: self.var, dimensions=dimensions
-                )
-            )
+            self.register_variable(fmi_type("var", getter=lambda: self.var, dimensions=dimensions))
 
         def do_step(self, t, dt):
             return True
 
     fmi_type_name = fmi_type.__qualname__.lower()
 
-    slave = Slave(instance_name="slaveInstance")
-    assert [
-        getattr(val, "value", val)
-        for val in getattr(slave, f"get_{fmi_type_name}")([0])
-    ] == value
+    slave = Slave(instanceName="slaveInstance")
+    assert [getattr(val, "value", val) for val in getattr(slave, f"get_{fmi_type_name}")([0])] == value
 
 
 @pytest.mark.requirements("numpy")
@@ -183,7 +161,7 @@ def test_ModelVariable_setter_array(fmi_type, value, dims):
             self.var = [None] * len(value)
             dimensions = [Dimension(start=val) for val in dims]
             self.register_variable(
-                PY2FMI[type(value[0])](
+                fmi_type(
                     "var",
                     getter=lambda: self.var,
                     setter=lambda v: setattr(self, "var", v),
@@ -194,7 +172,7 @@ def test_ModelVariable_setter_array(fmi_type, value, dims):
         def do_step(self, t, dt):
             return True
 
-    slave = Slave(instance_name="slaveInstance")
+    slave = Slave(instanceName="slaveInstance")
     fmi_type_name = fmi_type.__qualname__.lower()
 
     set_method = getattr(slave, f"set_{fmi_type_name}")
@@ -204,10 +182,7 @@ def test_ModelVariable_setter_array(fmi_type, value, dims):
         ],
         value,
     )
-    assert [
-        getattr(val, "value", val)
-        for val in getattr(slave, f"get_{fmi_type_name}")([0])
-    ] == value
+    assert [getattr(val, "value", val) for val in getattr(slave, f"get_{fmi_type_name}")([0])] == value
 
 
 @pytest.mark.parametrize("causality", list(Fmi3Causality) + [None])
@@ -242,7 +217,7 @@ def test_ModelVariable_to_xml(causality, initial, variability, name, description
     [
         (Boolean, True),
         (Int32, 23),
-        (UInt64, UInt64ValType(23)),
+        (UInt64, py_types['UInt64'](23)),
         (Float64, 15.0),
         (String, "hello"),
     ],
@@ -265,10 +240,10 @@ def test_ModelVariable_start(var_type, value, causality, initial, variability):
             self.var = value
             self.register_variable(var_obj)
 
-        def do_step(self, current_time: float, step_size: float):
+        def do_step(self, current_communication_point: float, communication_step_size: float):
             return True
 
-    slave = PySlave(instance_name="testInstance")
+    slave = PySlave(instanceName="testInstance")
 
     xml = slave.to_xml()
     var_node = xml.find(f".//{var_obj._type}[@name='var']")
@@ -401,13 +376,11 @@ def test_array_to_xml(name, start, dims):
     r = Float64(name, start, dimensions=[Dimension(start=val) for val in dims])
     xml = r.to_xml()
     if start is not None:
-        assert xml.attrib["start"] == " ".join(
-            [f"{val:.16g}" for val in flatten(start)]
-        )
+        assert xml.attrib["start"] == " ".join([f"{val:.16g}" for val in flatten(start)])
     if dims is not None:
         xml_dims = xml.findall(".//Dimension")
         assert len(xml_dims) == len(dims)
-        assert [xml_dim.attrib["start"] for xml_dim in xml_dims] == dims
+        assert [int(xml_dim.attrib["start"]) for xml_dim in xml_dims] == dims
 
 
 @pytest.mark.requirements("numpy")
@@ -431,10 +404,22 @@ def test_array_output_to_xml(name, start, dims):
     )
     xml = r.to_xml()
     if start is not None:
-        assert xml.attrib["start"] == " ".join(
-            [f"{val:.16g}" for val in flatten(start)]
-        )
+        assert xml.attrib["start"] == " ".join([f"{val:.16g}" for val in flatten(start)])
     if dims is not None:
         xml_dims = xml.findall(".//Dimension")
         assert len(xml_dims) == len(dims)
-        assert [xml_dim.attrib["start"] for xml_dim in xml_dims] == dims
+        assert [int(xml_dim.attrib["start"]) for xml_dim in xml_dims] == dims
+        
+if __name__ == "__main__":
+    retcode = 0
+    if retcode == 0:
+        retcode = pytest.main(["-rA", "-v", "--rootdir", "../", "--show", "False", __file__])
+        assert retcode == 0, f"Non-zero return code {retcode}"
+    # test_array_to_xml("array1", [1.0, 2.0, 3.0, 4.0], [4])
+    # test_array_to_xml("array2", [1.0, 2.0, 3.0, 4.0], [2, 2])
+    # test_array_output_to_xml("array1", [1.0, 2.0, 3.0, 4.0], [4])
+    # test_array_output_to_xml("array2", [1.0, 2.0, 3.0, 4.0], [2, 2])
+    # test_array_output_to_xml("array3", [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0], [2, 2, 2])
+    # test_ModelVariable_getter(Boolean, False)
+    # test_ModelVariable_getter(UInt64, py_types['UInt64'](23))
+    # test_ModelVariable_setter(UInt64, py_types['UInt64'](23))

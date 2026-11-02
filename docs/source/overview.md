@@ -9,6 +9,19 @@
 [![PyPI](https://img.shields.io/pypi/v/pythonfmu3)](https://pypi.org/project/pythonfmu3/)
 [![Read the Docs](https://readthedocs.org/projects/pythonfmu3/badge/?version=latest)](https://pythonfmu3.readthedocs.io/)
 
+```{toctree}
+:maxdepth: 2
+:caption: Contents:
+
+README
+install
+usage
+usageMX
+dependencies
+CHANGELOG
+pythonfmu3
+```
+
 ## Overview
 
 PythonFMU3 bridges the gap between Python's rich ecosystem and the Functional Mock-up Interface (FMI) 3.0 standard, enabling seamless integration of Python models into multi-domain simulation environments. Whether you're developing control systems, signal processing algorithms, or complex system models, PythonFMU3 makes it easy to package your Python code as industry-standard FMUs.
@@ -131,7 +144,7 @@ Explore comprehensive examples and documentation:
 
 - **[Co-simulation Examples](usage.md)**: PID controllers, filters, state machines
 - **[Model Exchange Examples](usageMX.md)**: Van der Pol oscillator, Robertson problem
-- **[API Reference](api.md)**: Complete class and method documentation
+- **[API Reference](pythonfmu3.rst)**: Complete class and method documentation
 - **[Installation Guide](install.md)**: Setup instructions for all platforms
 
 ## Community and Support

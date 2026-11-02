@@ -162,12 +162,12 @@ void PySlaveInstance::initialize(PyGILState_STATE gilState)
 
     PyObject* args = PyTuple_New(0);
     PyObject* kwargs = Py_BuildValue("{ss,ss,sn,si,si,si}",
-        "instance_name", instanceName_.c_str(),
+        "instanceName", instanceName_.c_str(),
         "resources", resources_.c_str(),
         "logger", &logger_,
         "visible", visible_,
-        "event_mode_used", eventModeUsed_,
-        "early_return_allowed", earlyReturnAllowed_
+        "eventModeUsed", eventModeUsed_,
+        "earlyReturnAllowed", earlyReturnAllowed_
         );
     pInstance_ = PyObject_Call(pClass_, args, kwargs);
     Py_DECREF(args);
@@ -182,7 +182,7 @@ void PySlaveInstance::initialize(PyGILState_STATE gilState)
 void PySlaveInstance::SetupExperiment(cppfmu::FMIBoolean, cppfmu::FMIFloat64, cppfmu::FMIFloat64 startTime, cppfmu::FMIBoolean, cppfmu::FMIFloat64)
 {
     py_safe_run([this, startTime](PyGILState_STATE gilState) {
-        auto f = PyObject_CallMethod(pInstance_, "setup_experiment", "(d)", startTime);
+        auto f = PyObject_CallMethod(pInstance_, "setupExperiment", "(d)", startTime);
         if (f == nullptr) {
             handle_py_exception("[setupExperiment] PyObject_CallMethod", gilState);
         }
@@ -199,50 +199,19 @@ void PySlaveInstance::SetupExperiment(cppfmu::FMIBoolean, cppfmu::FMIFloat64, cp
 // As defined in FMI3 standard:
 void PySlaveInstance::EnterInitializationMode(
     cppfmu::FMIBoolean toleranceDefined,
-    cppfmu::FMIFloat64 _tolerance,
+    cppfmu::FMIFloat64 tolerance,
     cppfmu::FMIFloat64 startTime,
     cppfmu::FMIBoolean stopTimeDefined,
     cppfmu::FMIFloat64 stopTime
     )
 {
-    py_safe_run([this, toleranceDefined, _tolerance, startTime, stopTimeDefined, stopTime](PyGILState_STATE gilState){
-        cppfmu::FMIFloat64 start_time = startTime;
-        //auto f = PyObject_CallMethod(pInstance_, "enter_initialization_mode", "(ddd)", tolerance, startTime, stopTime);
-        if (toleranceDefined) {
-            cppfmu::FMIFloat64 tolerance = _tolerance;
-            if (stopTimeDefined) {
-                cppfmu::FMIFloat64 stop_time = stopTime;
-                auto f = PyObject_CallMethod(pInstance_, "enter_initialization_mode", "(ddd)", tolerance, start_time, stop_time);
-                if (f == nullptr) {
-                    handle_py_exception("[enterInitializationMode](ddd) PyObject_CallMethod", gilState);
-                }
-                Py_DECREF(f);
-            } else {
-                PyObject *stop_time = Py_None;  /* borrowed reference */
-                auto f = PyObject_CallMethod(pInstance_, "enter_initialization_mode", "(ddO)", tolerance, start_time, stop_time);
-                if (f == nullptr) {
-                    handle_py_exception("[enterInitializationMode](ddO) PyObject_CallMethod", gilState);
-                }
-                Py_DECREF(f);
-            }
-        } else {
-            PyObject *tolerance = Py_None;  /* borrowed reference */
-            if (stopTimeDefined) {
-                cppfmu::FMIFloat64 stop_time = stopTime;
-                auto f = PyObject_CallMethod(pInstance_, "enter_initialization_mode", "(Odd)", tolerance, start_time, stop_time);
-                if (f == nullptr) {
-                    handle_py_exception("[enterInitializationMode](Odd) PyObject_CallMethod", gilState);
-                }
-                Py_DECREF(f);
-            } else {
-                PyObject *stop_time = Py_None;  /* borrowed reference */
-                auto f = PyObject_CallMethod(pInstance_, "enter_initialization_mode", "(OdO)", tolerance, start_time, stop_time);
-                if (f == nullptr) {
-                    handle_py_exception("[enterInitializationMode](OdO) PyObject_CallMethod", gilState);
-                }
-                Py_DECREF(f);
-            }
+    py_safe_run([this, toleranceDefined, tolerance, startTime, stopTimeDefined, stopTime](PyGILState_STATE gilState){
+        /*org: auto f = PyObject_CallMethod(pInstance_, "enterInitializationMode", "(ddd)", tolerance, startTime, stopTime); */
+        auto f = PyObject_CallMethod(pInstance_, "enterInitializationMode", "(iddid)", toleranceDefined, tolerance, startTime, stopTimeDefined, stopTime);
+        if (f == nullptr) {
+            handle_py_exception("[enterInitializationMode] PyObject_CallMethod", gilState);
         }
+        Py_DECREF(f);
         clearLogBuffer();
     });
 }
@@ -261,32 +230,29 @@ void PySlaveInstance::ExitInitializationMode()
 
 //cppfmu::FMIStatus PySlaveInstance::DoStep(
 void PySlaveInstance::DoStep(
-    cppfmu::FMIFloat64 current_communication_point,
-    cppfmu::FMIFloat64 communication_step_size,
-    cppfmu::FMIBoolean no_set_fmu_state_prior_to_current_point,
-    cppfmu::FMIBoolean* event_handling_needed,
-    cppfmu::FMIBoolean* terminate_simulation,
-    cppfmu::FMIBoolean* early_return,
-    cppfmu::FMIFloat64* last_successfull_time)
+    cppfmu::FMIFloat64 currentCommunicationPoint,
+    cppfmu::FMIFloat64 communicationStepSize,
+    cppfmu::FMIBoolean noSetFMUStatePriorToCurrentPoint,
+    cppfmu::FMIBoolean* eventHandlingNeeded,
+    cppfmu::FMIBoolean* terminateSimulation,
+    cppfmu::FMIBoolean* earlyReturn,
+    cppfmu::FMIFloat64* lastSuccessfullTime)
 {
-    /* Changed back to the original definition of DoStep
+/*  Changed back to the original definition of DoStep
     cppfmu::FMIStatus fmuStatus = cppfmu::FMIOK;
     py_safe_run([this, &fmuStatus, currentTime, stepSize, eventHandlingNeeded, terminateSimulation, earlyReturn](PyGILState_STATE gilState) {
-                */
-    py_safe_run([this,
-                 current_communication_point,
-                 communication_step_size,
-                 no_set_fmu_state_prior_to_current_point,
-                 event_handling_needed,
-                 terminate_simulation,
-                 early_return,
-                 last_successfull_time](PyGILState_STATE gilState) {
-        auto f = PyObject_CallMethod(pInstance_, "do_step", "(ddi)", current_communication_point, communication_step_size, no_set_fmu_state_prior_to_current_point);
+*/
+    py_safe_run([this, currentCommunicationPoint, communicationStepSize, noSetFMUStatePriorToCurrentPoint,
+                       eventHandlingNeeded, terminateSimulation, earlyReturn, lastSuccessfullTime](PyGILState_STATE gilState) {
+        auto f = PyObject_CallMethod(pInstance_, "doStep", "(ddO)",
+                                     currentCommunicationPoint,
+                                     communicationStepSize,
+                                     noSetFMUStatePriorToCurrentPoint ? Py_True : Py_False);
         if (f == nullptr) {
             handle_py_exception("[doStep] PyObject_CallMethod", gilState);
         }
 
-/*        // optional result according to the old definition
+/*        optional result according to the old definition
         if (PyObject_HasAttrString(f, "status")) {
             PyObject* pyStatus = PyObject_GetAttrString(f, "status");
             if (pyStatus) {
@@ -300,41 +266,41 @@ void PySlaveInstance::DoStep(
             }
         }
 */
-        if (PyObject_HasAttrString(f, "event_handling_needed")) {
-            PyObject* pyEventHandlingNeeded = PyObject_GetAttrString(f, "event_handling_needed");
+        if (PyObject_HasAttrString(f, "eventHandlingNeeded")) {
+            PyObject* pyEventHandlingNeeded = PyObject_GetAttrString(f, "eventHandlingNeeded");
             if (pyEventHandlingNeeded) {
-                *event_handling_needed = static_cast<bool>(PyObject_IsTrue(pyEventHandlingNeeded));
+                *eventHandlingNeeded = static_cast<bool>(PyObject_IsTrue(pyEventHandlingNeeded));
                 Py_DECREF(pyEventHandlingNeeded);
             }
         } else {
-            *event_handling_needed = false;
+            *eventHandlingNeeded = false;
         }
-        if (PyObject_HasAttrString(f, "terminate_simulation")) {
-            PyObject* pyTerminateSimulation = PyObject_GetAttrString(f, "terminate_simulation");
+        if (PyObject_HasAttrString(f, "terminateSimulation")) {
+            PyObject* pyTerminateSimulation = PyObject_GetAttrString(f, "terminateSimulation");
             if (pyTerminateSimulation) {
-                *terminate_simulation = static_cast<bool>(PyObject_IsTrue(pyTerminateSimulation));
+                *terminateSimulation = static_cast<bool>(PyObject_IsTrue(pyTerminateSimulation));
                 Py_DECREF(pyTerminateSimulation);
             }
         } else {
-            *terminate_simulation = false;
+            *terminateSimulation = false;
         }
-        if (PyObject_HasAttrString(f, "early_return")) {
-            PyObject* pyEarlyReturn = PyObject_GetAttrString(f, "early_return");
+        if (PyObject_HasAttrString(f, "earlyReturn")) {
+            PyObject* pyEarlyReturn = PyObject_GetAttrString(f, "earlyReturn");
             if (pyEarlyReturn) {
-                *early_return = static_cast<bool>(PyObject_IsTrue(pyEarlyReturn));
+                *earlyReturn = static_cast<bool>(PyObject_IsTrue(pyEarlyReturn));
                 Py_DECREF(pyEarlyReturn);
             }
         } else {
-            *early_return = false;
+            *earlyReturn = false;
         }
-        if (PyObject_HasAttrString(f, "last_successfull_time")) {
-            PyObject* pyLastSuccessfullTime = PyObject_GetAttrString(f, "last_successfull_time");
+        if (PyObject_HasAttrString(f, "lastSuccessfullTime")) {
+            PyObject* pyLastSuccessfullTime = PyObject_GetAttrString(f, "lastSuccessfullTime");
             if (pyLastSuccessfullTime) {
-                *last_successfull_time = PyFloat_AsDouble(pyLastSuccessfullTime);
+                *lastSuccessfullTime = PyFloat_AsDouble(pyLastSuccessfullTime);
                 Py_DECREF(pyLastSuccessfullTime);
             }
         } else {
-            *last_successfull_time = current_communication_point + communication_step_size;
+            *lastSuccessfullTime = currentCommunicationPoint + communicationStepSize;
         }
         Py_DECREF(f);
         clearLogBuffer();
@@ -641,65 +607,65 @@ void PySlaveInstance::GetString(const cppfmu::FMIValueReference* vr, std::size_t
     });
 }
 
-void PySlaveInstance::GetContinuousStates(cppfmu::FMIFloat64* continuous_states, std::size_t nStates) const
+void PySlaveInstance::GetContinuousStates(cppfmu::FMIFloat64* continuousStates, std::size_t nStates) const
 {
-    py_safe_run([this, &continuous_states, nStates](PyGILState_STATE gilState) {
+    py_safe_run([this, &continuousStates, nStates](PyGILState_STATE gilState) {
         auto f = PyObject_CallMethod(pInstance_, "get_continuous_states", nullptr);
         if (f == nullptr) {
-            handle_py_exception("[get_continuous_states] PyObject_CallMethod", gilState);
+            handle_py_exception("[getContinuousStates] PyObject_CallMethod", gilState);
         }
         // Assuming f is a list of floats
         for (std::size_t i = 0; i < nStates; i++) {
             PyObject* item = PyList_GetItem(f, i);
-            continuous_states[i] = static_cast<cppfmu::FMIFloat64>(PyFloat_AsDouble(item));
+            continuousStates[i] = static_cast<cppfmu::FMIFloat64>(PyFloat_AsDouble(item));
         }
         Py_DECREF(f);
         clearLogBuffer();
     });
 }
 
-void PySlaveInstance::GetContinuousStateDerivatives(cppfmu::FMIFloat64* continuous_state_derivatives, std::size_t nStates) const
+void PySlaveInstance::GetContinuousStateDerivatives(cppfmu::FMIFloat64* continuousStateDerivatives, std::size_t nStates) const
 {
-    py_safe_run([this, &continuous_state_derivatives, nStates](PyGILState_STATE gilState) {
+    py_safe_run([this, &continuousStateDerivatives, nStates](PyGILState_STATE gilState) {
         auto f = PyObject_CallMethod(pInstance_, "get_continuous_state_derivatives", nullptr);
         if (f == nullptr) {
             PyErr_Print();
-            handle_py_exception("[get_continuous_state_derivatives] PyObject_CallMethod", gilState);
+            handle_py_exception("[getContinuousStateDerivatives] PyObject_CallMethod", gilState);
         }
         // Assuming f is a list of floats
         for (std::size_t i = 0; i < nStates; i++) {
             PyObject* item = PyList_GetItem(f, i);
-            continuous_state_derivatives[i] = static_cast<cppfmu::FMIFloat64>(PyFloat_AsDouble(item));
+            continuousStateDerivatives[i] = static_cast<cppfmu::FMIFloat64>(PyFloat_AsDouble(item));
         }
         Py_DECREF(f);
         clearLogBuffer();
     });
 }
 
-void PySlaveInstance::GetNominalsOfContinuousStates(cppfmu::FMIFloat64* nominals_of_continuous_states, std::size_t nStates) const
+void PySlaveInstance::GetNominalsOfContinuousStates(cppfmu::FMIFloat64* nominalsOfContinuousStates, std::size_t nStates) const
 {
-    py_safe_run([this, &nominals_of_continuous_states, nStates](PyGILState_STATE gilState) {
+    py_safe_run([this, &nominalsOfContinuousStates, nStates](PyGILState_STATE gilState) {
         auto f = PyObject_CallMethod(pInstance_, "get_nominals_of_continuous_states", "(i)", static_cast<int>(nStates));
          // Check if f is a valid object
          if (f == nullptr) {
-            handle_py_exception("[getNominalContinuousStates] PyObject_CallMethod", gilState);
+            handle_py_exception("[getNominalsOfContinuousStates] PyObject_CallMethod", gilState);
         }
         // Assuming f is a list of floats
         for (std::size_t i = 0; i < nStates; i++) {
             PyObject* item = PyList_GetItem(f, i);
-            nominals_of_continuous_states[i] = static_cast<cppfmu::FMIFloat64>(PyFloat_AsDouble(item));
+            nominalsOfContinuousStates[i] = static_cast<cppfmu::FMIFloat64>(PyFloat_AsDouble(item));
         }
         Py_DECREF(f);
         clearLogBuffer();
     });
 }
 
-void PySlaveInstance::SetContinuousStates(const cppfmu::FMIFloat64* continuous_states, std::size_t nStates)
+void PySlaveInstance::SetContinuousStates(const cppfmu::FMIFloat64* continuousStates, std::size_t nStates)
 {
-    py_safe_run([this, &continuous_states, nStates](PyGILState_STATE gilState) {
+    py_safe_run([this, &continuousStates, nStates](PyGILState_STATE gilState) {
         PyObject* refs = PyList_New(nStates);
         for (int i = 0; i < nStates; i++) {
-            PyList_SetItem(refs, i, Py_BuildValue("d", continuous_states[i]));
+            PyList_SetItem(refs, i, Py_BuildValue("d", continuousStates[i]));
         }
 
         auto f = PyObject_CallMethod(pInstance_, "set_continuous_states", "(O)", refs);
@@ -738,9 +704,9 @@ void PySlaveInstance::GetNumberOfEventIndicators(std::size_t& nIndicators) const
     });
 }
 
-void PySlaveInstance::GetEventIndicators(cppfmu::FMIFloat64* event_indicators, std::size_t nIndicators) const
+void PySlaveInstance::GetEventIndicators(cppfmu::FMIFloat64* eventIndicators, std::size_t nIndicators) const
 {
-    py_safe_run([this, &event_indicators, nIndicators](PyGILState_STATE gilState) {
+    py_safe_run([this, &eventIndicators, nIndicators](PyGILState_STATE gilState) {
         auto f = PyObject_CallMethod(pInstance_, "get_event_indicators", nullptr);
         if (f == nullptr) {
             handle_py_exception("[getEventIndicators] PyObject_CallMethod", gilState);
@@ -748,7 +714,7 @@ void PySlaveInstance::GetEventIndicators(cppfmu::FMIFloat64* event_indicators, s
         // Assuming f is a list of floats
         for (std::size_t i = 0; i < nIndicators; i++) {
             PyObject* item = PyList_GetItem(f, i);
-            event_indicators[i] = static_cast<cppfmu::FMIFloat64>(PyFloat_AsDouble(item));
+            eventIndicators[i] = static_cast<cppfmu::FMIFloat64>(PyFloat_AsDouble(item));
         }
         Py_DECREF(f);
         clearLogBuffer();
@@ -770,48 +736,48 @@ void PySlaveInstance::SetTime(cppfmu::FMIFloat64 time)
 }
 
 void PySlaveInstance::UpdateDiscreteStates(
-    cppfmu::FMIBoolean* discrete_states_need_update,
-    cppfmu::FMIBoolean* terminate_simulation,
-    cppfmu::FMIBoolean* nominal_continuous_states_changed,
-    cppfmu::FMIBoolean* values_of_continuous_states_changed,
-    cppfmu::FMIBoolean* next_event_time_defined,
-    cppfmu::FMIFloat64* next_event_time)
+    cppfmu::FMIBoolean* discreteStatesNeedUpdate,
+    cppfmu::FMIBoolean* terminateSimulation,
+    cppfmu::FMIBoolean* nominalContinuousStatesChanged,
+    cppfmu::FMIBoolean* valuesOfContinuousStatesChanged,
+    cppfmu::FMIBoolean* nextEventTimeDefined,
+    cppfmu::FMIFloat64* nextEventTime)
 {
-    py_safe_run([this, discrete_states_need_update, terminate_simulation, nominal_continuous_states_changed,
-                values_of_continuous_states_changed, next_event_time_defined, next_event_time](PyGILState_STATE gilState) {
+    py_safe_run([this, discreteStatesNeedUpdate, terminateSimulation, nominalContinuousStatesChanged,
+                valuesOfContinuousStatesChanged, nextEventTimeDefined, nextEventTime](PyGILState_STATE gilState) {
         auto f = PyObject_CallMethod(pInstance_, "update_discrete_states", nullptr);
         if (f == nullptr) {
             handle_py_exception("[updateDiscreteStates] PyObject_CallMethod", gilState);
         }
 
-        if (PyObject_HasAttrString(f, "discrete_states_need_update")) {
-            PyObject * pyDiscreteStatesNeedUpdate = PyObject_GetAttrString(f, "discrete_states_need_update");
-            *discrete_states_need_update = static_cast<bool>(PyObject_IsTrue(pyDiscreteStatesNeedUpdate));
+        if (PyObject_HasAttrString(f, "discreteStatesNeedUpdate")) {
+            PyObject * pyDiscreteStatesNeedUpdate = PyObject_GetAttrString(f, "discreteStatesNeedUpdate");
+            *discreteStatesNeedUpdate = static_cast<bool>(PyObject_IsTrue(pyDiscreteStatesNeedUpdate));
             Py_DECREF(pyDiscreteStatesNeedUpdate);
         }
-        if (PyObject_HasAttrString(f, "terminate_simulation")) {
-            PyObject* pyTerminateSimulation = PyObject_GetAttrString(f, "terminate_simulation");
-            *terminate_simulation = static_cast<bool>(PyObject_IsTrue(pyTerminateSimulation));
+        if (PyObject_HasAttrString(f, "terminateSimulation")) {
+            PyObject* pyTerminateSimulation = PyObject_GetAttrString(f, "terminateSimulation");
+            *terminateSimulation = static_cast<bool>(PyObject_IsTrue(pyTerminateSimulation));
             Py_DECREF(pyTerminateSimulation);
         }
-        if (PyObject_HasAttrString(f, "nominal_continuous_states_changed")) {
-            PyObject* pyNominalContinuousStatesChanged = PyObject_GetAttrString(f, "nominal_continuous_states_changed");
-            *nominal_continuous_states_changed = static_cast<bool>(PyObject_IsTrue(pyNominalContinuousStatesChanged));
+        if (PyObject_HasAttrString(f, "nominalContinuousStatesChanged")) {
+            PyObject* pyNominalContinuousStatesChanged = PyObject_GetAttrString(f, "nominalContinuousStatesChanged");
+            *nominalContinuousStatesChanged = static_cast<bool>(PyObject_IsTrue(pyNominalContinuousStatesChanged));
             Py_DECREF(pyNominalContinuousStatesChanged);
         }
-        if (PyObject_HasAttrString(f, "values_of_continuous_states_changed")) {
-            PyObject* pyValuesOfContinuousStatesChanged = PyObject_GetAttrString(f, "values_of_continuous_states_changed");
-            *values_of_continuous_states_changed = static_cast<bool>(PyObject_IsTrue(pyValuesOfContinuousStatesChanged));
+        if (PyObject_HasAttrString(f, "valuesOfContinuousStatesChanged")) {
+            PyObject* pyValuesOfContinuousStatesChanged = PyObject_GetAttrString(f, "valuesOfContinuousStatesChanged");
+            *valuesOfContinuousStatesChanged = static_cast<bool>(PyObject_IsTrue(pyValuesOfContinuousStatesChanged));
             Py_DECREF(pyValuesOfContinuousStatesChanged);
         }
-        if (PyObject_HasAttrString(f, "next_event_time_defined")) {
-            PyObject* pyNextEventTimeDefined = PyObject_GetAttrString(f, "next_event_time_defined");
-            *next_event_time_defined = static_cast<bool>(PyObject_IsTrue(pyNextEventTimeDefined));
+        if (PyObject_HasAttrString(f, "nextEventTimeDefined")) {
+            PyObject* pyNextEventTimeDefined = PyObject_GetAttrString(f, "nextEventTimeDefined");
+            *nextEventTimeDefined = static_cast<bool>(PyObject_IsTrue(pyNextEventTimeDefined));
             Py_DECREF(pyNextEventTimeDefined);
         }
-        if (next_event_time_defined && *next_event_time_defined) {
-            PyObject* pyNextEventTime = PyObject_GetAttrString(f, "next_event_time");
-            *next_event_time = PyFloat_AsDouble(pyNextEventTime);
+        if (nextEventTimeDefined && *nextEventTimeDefined) {
+            PyObject* pyNextEventTime = PyObject_GetAttrString(f, "nextEventTime");
+            *nextEventTime = PyFloat_AsDouble(pyNextEventTime);
             Py_DECREF(pyNextEventTime);
         }
 
@@ -825,7 +791,7 @@ void PySlaveInstance::GetFMUstate(fmi3FMUState& state)
     py_safe_run([this, &state](PyGILState_STATE gilState) {
         auto f = PyObject_CallMethod(pInstance_, "_get_fmu_state", nullptr);
         if (f == nullptr) {
-            handle_py_exception("[_get_fmu_state] PyObject_CallMethod", gilState);
+            handle_py_exception("[getFMUState] PyObject_CallMethod", gilState);
         }
         state = reinterpret_cast<fmi3FMUState*>(f);
         clearLogBuffer();
@@ -838,7 +804,7 @@ void PySlaveInstance::SetFMUstate(const fmi3FMUState& state)
         auto pyState = reinterpret_cast<PyObject*>(state);
         auto f = PyObject_CallMethod(pInstance_, "_set_fmu_state", "(O)", pyState);
         if (f == nullptr) {
-            handle_py_exception("[_set_fmu_state] PyObject_CallMethod", gilState);
+            handle_py_exception("[setFMUState] PyObject_CallMethod", gilState);
         }
         clearLogBuffer();
     });
@@ -933,32 +899,32 @@ void PySlaveInstance::EnterContinuousTimeMode()
 }
 
 void PySlaveInstance::CompletedIntegratorStep(
-    cppfmu::FMIBoolean no_set_fmu_state_prior_to_current_point,
-    cppfmu::FMIBoolean* enter_event_mode,
-    cppfmu::FMIBoolean* terminate_simulation)
+    cppfmu::FMIBoolean noSetFMUStatePriorToCurrentPoint,
+    cppfmu::FMIBoolean* enterEventMode,
+    cppfmu::FMIBoolean* terminateSimulation)
 {
-    py_safe_run([this, no_set_fmu_state_prior_to_current_point, &enter_event_mode, &terminate_simulation](PyGILState_STATE gilState) {
-        auto f = PyObject_CallMethod(pInstance_, "completed_integrator_step", "(p)", no_set_fmu_state_prior_to_current_point);
+    py_safe_run([this, noSetFMUStatePriorToCurrentPoint, &enterEventMode, &terminateSimulation](PyGILState_STATE gilState) {
+        auto f = PyObject_CallMethod(pInstance_, "completedIntegratorStep", "(p)", noSetFMUStatePriorToCurrentPoint);
         if (f == nullptr) {
             handle_py_exception("[completedIntegratorStep] PyObject_CallMethod", gilState);
         }
-        if (PyObject_HasAttrString(f, "enter_event_mode")) {
-            PyObject* pyEnterEventMode = PyObject_GetAttrString(f, "enter_event_mode");
+        if (PyObject_HasAttrString(f, "enterEventMode")) {
+            PyObject* pyEnterEventMode = PyObject_GetAttrString(f, "enterEventMode");
             if (pyEnterEventMode) {
-                *enter_event_mode = static_cast<bool>(PyObject_IsTrue(pyEnterEventMode));
+                *enterEventMode = static_cast<bool>(PyObject_IsTrue(pyEnterEventMode));
                 Py_DECREF(pyEnterEventMode);
             }
         } else {
-            *enter_event_mode = false;
+            *enterEventMode = false;
         }
-        if (PyObject_HasAttrString(f, "terminate_simulation")) {
-            PyObject* pyTerminateSimulation = PyObject_GetAttrString(f, "terminate_simulation");
+        if (PyObject_HasAttrString(f, "terminateSimulation")) {
+            PyObject* pyTerminateSimulation = PyObject_GetAttrString(f, "terminateSimulation");
             if (pyTerminateSimulation) {
-                *terminate_simulation = static_cast<bool>(PyObject_IsTrue(pyTerminateSimulation));
+                *terminateSimulation = static_cast<bool>(PyObject_IsTrue(pyTerminateSimulation));
                 Py_DECREF(pyTerminateSimulation);
             }
         } else {
-            *terminate_simulation = false;
+            *terminateSimulation = false;
         }
         Py_DECREF(f);
         clearLogBuffer();
@@ -1130,11 +1096,11 @@ void PySlaveInstance::SetShiftDecimal(const cppfmu::FMIValueReference* vr, std::
 void PySlaveInstance::GetIntervalFraction(
     const cppfmu::FMIValueReference* vr,
     std::size_t nvr,
-    cppfmu::FMIUInt64* interval_counters,
+    cppfmu::FMIUInt64* intervalCounters,
     cppfmu::FMIUInt64* resolutions,
     cppfmu::FMIIntervalQualifier* qualifiers) const
 {
-    py_safe_run([this, &vr, nvr, &interval_counters, &resolutions, &qualifiers](PyGILState_STATE gilState) {
+    py_safe_run([this, &vr, nvr, &intervalCounters, &resolutions, &qualifiers](PyGILState_STATE gilState) {
         PyObject* vrs = PyList_New(nvr);
         for (int i = 0; i < nvr; i++) {
             PyList_SetItem(vrs, i, Py_BuildValue("i", vr[i]));
@@ -1153,7 +1119,7 @@ void PySlaveInstance::GetIntervalFraction(
         //auto ref0 = PyList_GetItem(refs, 0);
         for (int i = 0; i < nvr; i++) {
             PyObject* value = PyList_GetItem(ref0, i);
-            interval_counters[i] = static_cast<cppfmu::FMIUInt64>(PyLong_AsUnsignedLongLong(value));
+            intervalCounters[i] = static_cast<cppfmu::FMIUInt64>(PyLong_AsUnsignedLongLong(value));
         }
         Py_DECREF(ref0);
         auto ref1 = PyList_GetItem(refs, 1);
@@ -1176,10 +1142,10 @@ void PySlaveInstance::GetIntervalFraction(
 void PySlaveInstance::SetIntervalFraction(
     const cppfmu::FMIValueReference* vr,
     std::size_t nvr,
-    const cppfmu::FMIUInt64* interval_counters,
+    const cppfmu::FMIUInt64* intervalCounters,
     const cppfmu::FMIUInt64* resolutions)
 {
-    py_safe_run([this, &vr, nvr, &interval_counters, &resolutions](PyGILState_STATE gilState) {
+    py_safe_run([this, &vr, nvr, &intervalCounters, &resolutions](PyGILState_STATE gilState) {
         PyObject* vrs = PyList_New(nvr);
         PyObject* refs1 = PyList_New(nvr);
         PyObject* refs2 = PyList_New(nvr);
@@ -1187,7 +1153,7 @@ void PySlaveInstance::SetIntervalFraction(
             PyList_SetItem(vrs, i, Py_BuildValue("i", vr[i]));
         }
         for (int i = 0; i < nvr; i++) {
-            PyList_SetItem(refs1, i, Py_BuildValue("K", interval_counters[i]));
+            PyList_SetItem(refs1, i, Py_BuildValue("K", intervalCounters[i]));
         }
         for (int i = 0; i < nvr; i++) {
             PyList_SetItem(refs2, i, Py_BuildValue("K", resolutions[i]));
@@ -1208,10 +1174,10 @@ void PySlaveInstance::SetIntervalFraction(
 void PySlaveInstance::GetShiftFraction(
     const cppfmu::FMIValueReference* vr,
     std::size_t nvr,
-    cppfmu::FMIUInt64* shift_counters,
+    cppfmu::FMIUInt64* shiftCounters,
     cppfmu::FMIUInt64* resolutions) const
 {
-    py_safe_run([this, &vr, nvr, &shift_counters, &resolutions](PyGILState_STATE gilState) {
+    py_safe_run([this, &vr, nvr, &shiftCounters, &resolutions](PyGILState_STATE gilState) {
         PyObject* vrs = PyList_New(nvr);
         for (int i = 0; i < nvr; i++) {
             PyList_SetItem(vrs, i, Py_BuildValue("i", vr[i]));
@@ -1227,7 +1193,7 @@ void PySlaveInstance::GetShiftFraction(
         auto ref0 = PyList_GetItem(refs, 0);
         for (int i = 0; i < nvr; i++) {
             PyObject* value = PyList_GetItem(ref0, i);
-            shift_counters[i] = static_cast<cppfmu::FMIUInt64>(PyLong_AsUnsignedLongLong(value));
+            shiftCounters[i] = static_cast<cppfmu::FMIUInt64>(PyLong_AsUnsignedLongLong(value));
         }
         Py_DECREF(ref0);
         auto ref1 = PyList_GetItem(refs, 1);
@@ -1244,10 +1210,10 @@ void PySlaveInstance::GetShiftFraction(
 void PySlaveInstance::SetShiftFraction(
     const cppfmu::FMIValueReference* vr,
     std::size_t nvr,
-    const cppfmu::FMIUInt64* shift_counters,
+    const cppfmu::FMIUInt64* shiftCounters,
     const cppfmu::FMIUInt64* resolutions)
 {
-    py_safe_run([this, &vr, nvr, &shift_counters, &resolutions](PyGILState_STATE gilState) {
+    py_safe_run([this, &vr, nvr, &shiftCounters, &resolutions](PyGILState_STATE gilState) {
         PyObject* vrs = PyList_New(nvr);
         PyObject* refs1 = PyList_New(nvr);
         PyObject* refs2 = PyList_New(nvr);
@@ -1255,7 +1221,7 @@ void PySlaveInstance::SetShiftFraction(
             PyList_SetItem(vrs, i, Py_BuildValue("i", vr[i]));
         }
         for (int i = 0; i < nvr; i++) {
-            PyList_SetItem(refs1, i, Py_BuildValue("K", shift_counters[i]));
+            PyList_SetItem(refs1, i, Py_BuildValue("K", shiftCounters[i]));
         }
         for (int i = 0; i < nvr; i++) {
             PyList_SetItem(refs2, i, Py_BuildValue("K", resolutions[i]));

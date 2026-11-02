@@ -63,12 +63,12 @@ def test_cosimulation_examples():
         except Exception as e:
             pytest.fail(f"Code block {i + 1} failed: {e}\nCode:\n{code}")
 
-    assert "LinearTransform" in namespace, "LinearTransform class not found"
+    assert "LinearTransform2x2" in namespace, "LinearTransform2x2 class not found"
     assert "PIDController" in namespace, "PIDController class not found"
 
     # Test instantiation
-    lt = namespace["LinearTransform"](instance_name="test")
-    pc = namespace["PIDController"](instance_name="test")
+    lt = namespace["LinearTransform2x2"](instanceName="test")
+    pc = namespace["PIDController"](instanceName="test")
 
 
 @pytest.mark.doc
@@ -93,6 +93,15 @@ def test_model_exchange_examples():
     assert "BouncingBall" in namespace, "BouncingBall class not found"
 
     # Test instantiation
-    vdp = namespace["VanDerPol"](instance_name="test")
+    vdp = namespace["VanDerPol"](instanceName="test")
+    bb = namespace["BouncingBall"](instanceName="test")
 
-    bb = namespace["BouncingBall"](instance_name="test")
+if __name__ == "__main__":
+    """Possibility to run single or all tests from the IDE."""
+    retcode = 1
+    if retcode == 0:
+        retcode = pytest.main(["-rA", "-v", "--rootdir", "../", "--show", "False", __file__])
+        assert retcode == 0, f"Non-zero return code {retcode}"
+
+    #test_cosimulation_examples()
+    test_model_exchange_examples()

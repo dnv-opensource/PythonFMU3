@@ -51,7 +51,7 @@ class MLDemo(Fmi3Slave):
             Float64("sin_output_ref", causality=Fmi3Causality.output)
         )
 
-    def do_step(self, current_time, step_size):
+    def do_step(self, current_communication_point, communication_step_size):
         # Similar to model.predict() with less performance overhead
         self.sin_output_tf = self.model(
             np.array([self.sin_input]), training=False

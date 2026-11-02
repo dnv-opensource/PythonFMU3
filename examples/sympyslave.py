@@ -36,10 +36,10 @@ class SympySlave(Fmi3Slave):
         )
         self.register_variable(Float64("realOut", causality=Fmi3Causality.output))
 
-    def do_step(self, current_time, step_size):
+    def do_step(self, current_communication_point, communication_step_size):
         i, a, t, tau = symbols("i, a, t, tau")
         expr = i * a * (1 - exp(-1 * t / tau))
         self.realOut = expr.evalf(
-            subs={i: self.realIn, a: self.a, t: current_time + step_size, tau: self.tau}
+            subs={i: self.realIn, a: self.a, t: current_communication_point + communication_step_size, tau: self.tau}
         )
         return True

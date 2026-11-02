@@ -14,7 +14,7 @@ from pythonfmu3.enums import (
     Fmi3Variability,
     Fmi3Status)
 from pythonfmu3.variables import Float64, UInt64, String, Dimension
-from pythonfmu3.model_returns import Fmi3StepResult, Fmi3UpdateDiscreteStatesResult
+from pythonfmu3.model_returns import Fmi3StepResult, UpdateDiscreteStatesResult
 from pythonfmu3.model_options import Fmi3ModelOptionsCS
 
 EPS = 1e-14
@@ -22,13 +22,12 @@ EPS = 1e-14
 class LinearTransform(Fmi3Slave):
     """Linear transformation of a scalar input value."""
 
-    def __init__(self, **kwargs):
-        kwargs.update({'model_options_cs' : Fmi3ModelOptionsCS(canHandleVariableCommunicationStepSize = True,
-                                                               hasEventMode = True),
-                       'model_options_me' : None,
-                       })
+    def __init__(self,
+                 model_options_cs = Fmi3ModelOptionsCS(**{'canHandleVariableCommunicationStepSize':True,
+                                                          'hasEventMode':True}),
+                       **kwargs):
+        kwargs.update({'model_options_cs' : model_options_cs})
         super().__init__(**kwargs)
-
         self.author = "Siegfried Eisinger"
         self.description = "Linear transformation of a scalar input value: y = a + b*x"
 
@@ -66,8 +65,11 @@ class LinearTransform(Fmi3Slave):
         # print(f"Initialization finished")
         pass
 
-    def do_step(self, current_time:float, step_size:float, *, no_set_fmu_state_prior_to_current_point:bool=True):
-        self.time = current_time + step_size
+    def do_step(self,
+                current_communication_point:float,
+                communication_step_size:float,
+                no_set_fmu_state_prior_to_current_point:bool):
+        self.time = current_communication_point + communication_step_size
         self.y = self.transform(self.x)
         return Fmi3StepResult(eventHandlingNeeded = False, lastSuccessfullTime = self.time)
     
@@ -91,7 +93,7 @@ class LinearTransform(Fmi3Slave):
                the previous definition of nextEventTime becomes obsolete.
         """
         self.y = self.transform(self.x)
-        return Fmi3UpdateDiscreteStatesResult(discreteStatesNeedUpdate = True)
+        return UpdateDiscreteStatesResult(discrete_states_need_update = True)
 
     def transform(self, x:float):
         return self.a + self.b* x

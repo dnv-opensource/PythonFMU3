@@ -30,10 +30,9 @@ class Oscillator(Fmi3Slave):
     """
 
     def __init__(self, **kwargs):
-        kwargs.update({'model_options_cs' : Fmi3ModelOptionsCS(canHandleVariableCommunicationStepSize = True,
-                                                               mightReturnEarlyFromDoStep = False,
-                                                               hasEventMode = False),
-                       'model_options_me' : None,
+        kwargs.update({'model_options_cs' : Fmi3ModelOptionsCS(**{'canHandleVariableCommunicationStepSize' : True,
+                                                                  'mightReturnEarlyFromDoStep' : False,
+                                                                  'hasEventMode' :False}),
                        })
         super().__init__(**kwargs)
         self.log(f"FMU instantiating: visible:{self.visible}, use events?{self.event_mode_used}")
@@ -107,21 +106,21 @@ class Oscillator(Fmi3Slave):
         return res
 
     def do_step(self,
-                current_time: float,
-                step_size: float,
-                *,
-                no_set_fmu_state_prior_to_current_point:bool=True) -> Fmi3StepResult:
+                current_communication_point: float,
+                communication_step_size: float,
+                no_set_fmu_state_prior_to_current_point:bool
+                ) -> Fmi3StepResult:
         """Do one simulation step of size dt.
 
         We implement a very simplistic algoritm based on difference calculus.
         """
-        self.time = current_time + step_size
+        self.time = current_communication_point + communication_step_size
         for i in range(self.dim):  # this is a xD oscillator
             if self.x[i] != 0 or self.v[i] != 0 or self.f[i] != 0:
                 y0 = np.array([self.v[i], self.x[i]], float)
                 sol = integrate.solve_ivp(
                     fun=self.ode_func,
-                    t_span=[current_time, current_time + step_size],
+                    t_span=[current_communication_point, current_communication_point + communication_step_size],
                     y0=y0,
                     args=(i, self.f[i]),  # axis and force as extra arguments to fun
                     atol=self.tolerance,

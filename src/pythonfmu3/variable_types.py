@@ -19,6 +19,7 @@ class VariableType:
         """Convert the variable to XML node.
 
         Returns
+        -------
             xml.etree.ElementTree.Element: XML node
         """
         attrib = dict()
@@ -37,6 +38,7 @@ class Float64Type(VariableType):
 
 class Item:
     """Helper class for EnumerationType definitions."""
+
     tag = "Item"
 
     def __init__(self, name: str, value: int, description: str = "", **kwargs):
@@ -57,6 +59,7 @@ class Item:
         """Convert the variable to XML node.
 
         Returns
+        -------
             xml.etree.ElementTree.Element: XML node
         """
         attrib = dict()
@@ -66,12 +69,7 @@ class Item:
         return Element(self.tag, attrib)
 
     def __repr__(self) -> str:
-        return (
-            f"{self.__class__.__name__}"
-            f"(name={self.name}, "
-            f"value={self.value}, "
-            f"description={self.description})"
-        )
+        return f"{self.__class__.__name__}(name={self.name}, value={self.value}, description={self.description})"
 
 
 class EnumerationType(VariableType):
@@ -94,6 +92,7 @@ class EnumerationType(VariableType):
         """Convert the variable to XML node.
 
         Returns
+        -------
             xml.etree.ElementTree.Element: XML node
         """
         parent = super().to_xml()

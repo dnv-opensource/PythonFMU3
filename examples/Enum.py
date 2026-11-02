@@ -47,6 +47,6 @@ class Enum(Fmi3Slave):
             var_type=enum_type,
         )
 
-    def do_step(self, current_time, step_size):
+    def do_step(self, current_communication_point, communication_step_size):
         self.x += 1.0
         return True

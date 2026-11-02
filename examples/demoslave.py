@@ -50,7 +50,7 @@ class Resistor(Fmi3Slave):
             String("stringVariable", causality=Fmi3Causality.parameter)
         )
 
-    def do_step(self, current_time, step_size):
+    def do_step(self, current_communication_point, communication_step_size):
         self.delta_v = self.positive_pin_v - self.negative_pin_v
         self.i = i = self.delta_v / self.R
         self.positive_pin_i = i

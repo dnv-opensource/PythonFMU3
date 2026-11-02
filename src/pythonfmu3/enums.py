@@ -34,6 +34,7 @@ class Fmi3Variability(Enum):
     discrete = 3
     continuous = 4
 
+
 class Fmi3IntervalVariability(Enum):
     constant = 0
     fixed = 1

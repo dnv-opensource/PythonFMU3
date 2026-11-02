@@ -1,4 +1,4 @@
-## FMU Dependencies
+# FMU Dependencies
 
 Often, Python scripts depends on non-builtin libraries like `numpy`, `scipy`, etc.
 _PythonFMU3_ does not package a full environment within the FMU.

@@ -19,5 +19,8 @@ class PythonSlaveWithException(Fmi3Slave):
         self.register_variable(Float64("realIn", causality=Fmi3Causality.input))
         self.register_variable(Float64("realOut", causality=Fmi3Causality.output))
 
-    def do_step(self, current_time, step_size):
-        raise RuntimeError()
+    def do_step(self,
+                currentCommunicationPoint: float,
+                communicationStepSize: float,
+                noSetFMUStatePriorToCurrentPoint: bool):
+        raise RuntimeError
