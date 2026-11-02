@@ -11,7 +11,7 @@ import numpy as np
 from pythonfmu3 import Fmi3Slave
 from pythonfmu3.enums import Fmi3IntervalVariability, Fmi3Causality, Fmi3Status
 from pythonfmu3.variables import Boolean, Float64, Int32, Clock
-from pythonfmu3.model_returns import Fmi3StepResult, UpdateDiscreteStatesResult
+from pythonfmu3.model_returns import Fmi3StepResult, Fmi3UpdateDiscreteStatesResult
 from pythonfmu3.model_options import Fmi3ModelOptionsCS
 
 LOGGER = logging.getLogger(__name__)
@@ -106,21 +106,12 @@ class TwoState(Fmi3Slave):
         if self.time >= self.next_time-EPS:
             if not self.event_mode_used:
                 _ = self.update_discrete_states()
-                ret = Fmi3StepResult(eventHandlingNeeded = False,
-                                     lastSuccessfullTime = self.time)                
-                #ret = StepResult(event_handling_needed = False,
-                #                 last_successfull_time = self.time)                
+                ret = Fmi3StepResult(eventHandlingNeeded = False, lastSuccessfullTime = self.time)                
             else:
-                ret = Fmi3StepResult(eventHandlingNeeded = True,
-                                     lastSuccessfullTime = self.next_time)
-                #ret = StepResult(event_handling_needed = True,
-                #                 last_successfull_time = self.next_time)
+                ret = Fmi3StepResult(eventHandlingNeeded = True, lastSuccessfullTime = self.next_time)
         else:
-            ret = Fmi3StepResult(eventHandlingNeeded = False,
-                                 lastSuccessfullTime = self.time)
-            #ret = StepResult(event_handling_needed = False,
-            #                 last_successfull_time = self.time)
-        #self.log(f"DoStep@{current_communication_point}: {ret}")
+            ret = Fmi3StepResult(eventHandlingNeeded = False, lastSuccessfullTime = self.time)
+        # self.log(f"DoStep@{current_communication_point}: {ret}")
         return ret
     
     def update_discrete_states(self):
@@ -145,13 +136,10 @@ class TwoState(Fmi3Slave):
         self.state = 1 if self.time == 0.0 else 1 - self.state
         self.next_interval = self.get_next_interval()
         self.next_time = self.time + self.next_interval
-        #self.log(f"Update {self.instance_name}(TwoState) @{self.time} => {self.state}. NextT:{self.next_time}")            
-#         return Fmi3UpdateDiscreteStatesResult(discreteStatesNeedUpdate=True,
-#                                               nextEventTimeDefined=True,
-#                                               nextEventTime=self.next_time)
-        return UpdateDiscreteStatesResult(discrete_states_need_update=True,
-                                          next_event_time_defined=True,
-                                          next_event_time=self.next_time)
+        # self.log(f"Update {self.instance_name}(TwoState) @{self.time} => {self.state}. NextT:{self.next_time}")            
+        return Fmi3UpdateDiscreteStatesResult(discreteStatesNeedUpdate=True,
+                                              nextEventTimeDefined=True,
+                                              nextEventTime=self.next_time)
 
 
 if __name__ == "__main__":

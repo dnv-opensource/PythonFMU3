@@ -15,7 +15,7 @@ from pythonfmu3.enums import (
     Fmi3Initial,
     Fmi3Status)
 from pythonfmu3.variables import Float64, UInt64, String, Dimension
-from pythonfmu3.model_returns import Fmi3StepResult, UpdateDiscreteStatesResult
+from pythonfmu3.model_returns import Fmi3StepResult, Fmi3UpdateDiscreteStatesResult
 from pythonfmu3.model_options import Fmi3ModelOptionsCS
 
 EPS = 1e-14
@@ -143,11 +143,11 @@ class Table(Fmi3Slave):
             else:
                 self.next_time = float('inf')
             self.outputs = self.values[self.row]
-            return UpdateDiscreteStatesResult(discrete_states_need_update = True,
-                                              next_event_time_defined = (self.next_time is not None),
-                                              next_event_time = self.next_time)
+            return Fmi3UpdateDiscreteStatesResult(discreteStatesNeedUpdate = True,
+                                                  nextEventTimeDefined = (self.next_time is not None),
+                                                  nextEventTime = self.next_time)
         else:
-            return UpdateDiscreteStatesResult()
+            return Fmi3UpdateDiscreteStatesResult()
 
 if __name__ == "__main__":
     from pathlib import Path

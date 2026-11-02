@@ -260,7 +260,7 @@ def test_linear_transform_2x2(*, show: bool):
 
 
 if __name__ == "__main__":
-    retcode = 1
+    retcode = 0
     if retcode == 0:
         retcode = pytest.main(["-rA", "-v", "--rootdir", "../", "--show", "False", __file__])
         assert retcode == 0, f"Non-zero return code {retcode}"
@@ -272,4 +272,4 @@ if __name__ == "__main__":
     # test_oscillator( show=True)
     # test_driving_force( show=True)
     # test_bouncing_ball( show=True)
-    test_linear_transform_2x2( show=True)
+    # test_linear_transform_2x2( show=True)

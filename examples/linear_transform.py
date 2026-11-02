@@ -14,7 +14,7 @@ from pythonfmu3.enums import (
     Fmi3Variability,
     Fmi3Status)
 from pythonfmu3.variables import Float64, UInt64, String, Dimension
-from pythonfmu3.model_returns import Fmi3StepResult, UpdateDiscreteStatesResult
+from pythonfmu3.model_returns import Fmi3StepResult, Fmi3UpdateDiscreteStatesResult
 from pythonfmu3.model_options import Fmi3ModelOptionsCS
 
 EPS = 1e-14
@@ -93,7 +93,7 @@ class LinearTransform(Fmi3Slave):
                the previous definition of nextEventTime becomes obsolete.
         """
         self.y = self.transform(self.x)
-        return UpdateDiscreteStatesResult(discrete_states_need_update = True)
+        return Fmi3UpdateDiscreteStatesResult(discreteStatesNeedUpdate = True)
 
     def transform(self, x:float):
         return self.a + self.b* x

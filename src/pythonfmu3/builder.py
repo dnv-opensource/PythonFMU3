@@ -11,14 +11,12 @@ import zipfile
 from collections.abc import Iterable
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
-from xml.etree.ElementTree import Element, tostring
-
-from defusedxml.minidom import parseString
+import xml.etree.ElementTree as ET
 
 from pythonfmu3.fmi3slave import Fmi3SlaveBase
 from pythonfmu3.model_options import Fmi3ModelOptionsCS, Fmi3ModelOptionsME
 
-from .osutil import get_lib_extension, get_platform
+from pythonfmu3.osutil import get_lib_extension, get_platform
 
 FilePath = str | Path
 HERE = Path(__file__).parent
@@ -34,7 +32,7 @@ def get_class_name(file_name: Path) -> str:
         return found.group(1)
 
 
-def get_model_description(filepath: Path, module_name: str) -> tuple[str, Element]:
+def get_model_description(filepath: Path, module_name: str) -> tuple[str, ET.Element]:
     """Extract the FMU model description as XML.
 
     Args:
@@ -43,7 +41,7 @@ def get_model_description(filepath: Path, module_name: str) -> tuple[str, Elemen
 
     Returns
     -------
-        FMU model name, model description as xml element
+        FMU model name, model description as xml ET.Element
     """
     # Add current folder to handle local dependencies
     sys.path.insert(0, str(filepath.parent))
@@ -65,7 +63,7 @@ def get_model_description(filepath: Path, module_name: str) -> tuple[str, Elemen
     if not isinstance(instance, Fmi3SlaveBase):
         raise TypeError(f"The provided class '{class_name}' does not inherit from {Fmi3SlaveBase.__qualname__}")
     # Produce the xml
-    _xml : Element = instance.to_xml(model_options_cs)
+    _xml : ET.Element = instance.to_xml(model_options_cs)
     assert instance.modelName is not None, "Need an instance and modelName at this point"
     return (instance.modelName, _xml)
 
@@ -199,10 +197,16 @@ class FmuBuilder:
                     zip_fmu.write(f, arcname=(terminals_folder / relative_f))
 
                 # Add the model description
-                _xml = tostring(xml, "UTF-8")
-                xml_str = parseString(_xml)
-                zip_fmu.writestr("modelDescription.xml", xml_str.toprettyxml(encoding="UTF-8"))
-
+                tree = ET.ElementTree(xml)
+                ET.indent(tree, space="  ", level=0)
+                #res = tree.write(zip_fmu, encoding='utf-8', xml_declaration=True)
+                #print("RES", res)
+#                 with Path.open(temp_dir /"modelDescription.xml", 'wb') as f:
+#                     tree.write(f, encoding='utf-8')
+#                     num = zip_fmu.write(f)
+#                     assert num>0
+                with zip_fmu.open("modelDescription.xml", 'w') as f:
+                    tree.write( f, encoding='utf-8', xml_declaration=True)
             return dest_file
 
     @staticmethod

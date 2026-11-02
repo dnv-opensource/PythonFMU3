@@ -17,7 +17,6 @@ from pythonfmu3.logmsg import LogMsg
 from pythonfmu3.model_options import Fmi3ModelOptionsCS, Fmi3ModelOptionsME
 from pythonfmu3.modelexchange import ModelExchange
 from pythonfmu3.model_returns import Fmi3StepResult, Fmi3UpdateDiscreteStatesResult
-from pythonfmu3.model_returns import StepResult, UpdateDiscreteStatesResult
 from pythonfmu3.unit import Unit
 from pythonfmu3.variable_types import VariableType
 from pythonfmu3.variables import (
@@ -338,8 +337,12 @@ class Fmi3SlaveBase:
     def enter_initialization_mode(
         self, tolerance: float | None = None, start_time: float = 0.0, stop_time: float | None = None
     ) -> None:
-        """Run initialization mode in Python-adapted style."""
-        assert not all(x is None for x in (tolerance, stop_time)), "One out of tolerance and stop_time shall be defined" 
+        """Run initialization mode in Python-adapted style.
+
+        Note: we allow that both tolerance and stop_time are set to None.
+        This means only that there are no limits and that the orchestrator can run as long as desired.
+        """
+        pass
 
     def exit_initialization_mode(self) -> None:
         pass
