@@ -1,5 +1,6 @@
 """Defines various variable types and shapes and exports them."""
 import numpy as np
+import numpy.typing as npt
 from pythonfmu3 import Fmi3Slave
 from pythonfmu3.enums import (
     Fmi3IntervalVariability,
@@ -46,6 +47,8 @@ class Variables3(Fmi3Slave):
         self.int64_in: np.int64 = -64
         self.uint64_in: np.uint64 = 64
         self.enumeration_in: np_int32 = 99
+        self.arr_float64_in: npt.NDArray[np.float64] = np.array( (0,1,2,3,4,5,6,7,8,9), np.float64)
+        self.arr_int32_in: npt.NDArray[np.int32] = np.array( (0,1,2,3,4,5,6,7,8,9), np.int32)
         # self.clock_in: bool
         
         # Outputs
@@ -62,6 +65,8 @@ class Variables3(Fmi3Slave):
         self.int64_out: np.int64
         self.uint64_out: np.uint64
         self.enumeration_out: int
+        self.arr_float64_out: npt.NDArray[np.float64]
+        self.arr_int32_out: npt.NDArray[np.int32]
         # self.clock_out: bool
 
         self.update_out()
@@ -89,6 +94,10 @@ class Variables3(Fmi3Slave):
         self.register_variable(UInt16("uint16_in", variability=_discrete, causality=_input, start="16"))
         self.register_variable(UInt8("uint8_in", variability=_discrete, causality=_input, start="8"))
         #??self.register_variable(Enumeration("enumeration_in", variability=_discrete, causality=_input, start="99"))
+        self.register_variable(Float64("arr_float64_in", variability=_continuous, causality=_input,
+                                       dimensions=[Dimension(start=10)], start="0 1 2 3 4 5 6 7 8 9"))
+        self.register_variable(Int32("arr_int32_in", variability=_discrete, causality=_input,
+                                     dimensions=[Dimension(start=5), Dimension(start=2)], start="0 1 2 3 4 5 6 7 8 9"))
 
         #self.register_variable(Boolean("bool_out", variability=_discrete, causality=_input))#, start=True))
         self.register_variable(String("str_out", variability=_discrete, causality=_input, start="Hello World"))
@@ -102,6 +111,10 @@ class Variables3(Fmi3Slave):
         self.register_variable(UInt32("uint32_out", variability=_discrete, causality=_input, start="32"))
         self.register_variable(UInt16("uint16_out", variability=_discrete, causality=_input, start="16"))
         self.register_variable(UInt8("uint8_out", variability=_discrete, causality=_input, start="8"))
+        self.register_variable(Float64("arr_float64_out", variability=_continuous, causality=_output,
+                                       dimensions=[Dimension(start=10)]))
+        self.register_variable(Int32("arr_int32_out", variability=_discrete, causality=_output,
+                                     dimensions=[Dimension(start=5), Dimension(start=2)]))
 
 
     def update_out(self):
@@ -118,6 +131,9 @@ class Variables3(Fmi3Slave):
         self.int64_out = self.int64_in
         self.uint64_out = self.uint64_in
         self.enumeration_out = self.enumeration_in
+        self.arr_float64_out = self.arr_float64_in
+        self.arr_int32_out = self.arr_int32_in
+
         # self.clock_out = self.clock_in        
 
     def do_step(self,
