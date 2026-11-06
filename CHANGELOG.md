@@ -35,6 +35,9 @@ All changes where implemented in the branch *eis*
 * Added a CHANGELOG.md file to the package and included this point list from the git commit messages.
 * Fixed findings from verification. Mainly PySlaveInstance.cpp fixes and adaptations in some .py files. test_cli.py has been removed, since it needs complete re-write
 * One step towards satisfying ruff, mypy and pyright. Still there are a lot of comments. All tests are working.
+* Added the remaining Int* and UInt* standard FMI3 variable types. Added suitable tests and the FMU Variables3.fmu containing all variable types
+  Clock variables are still missing and Enumeration variables are untested.
+
 
 
 
