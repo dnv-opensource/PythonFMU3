@@ -63,7 +63,6 @@ dependencies = [
     "fmpy>=0.3.21",
     "pyqt6>=6.10",
     "xmlschema>=4.3",
-    "defusedxml>=0.7.1",
 ]
 
 

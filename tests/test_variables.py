@@ -11,10 +11,17 @@ from pythonfmu3.variables import (
     Boolean,
     Dimension,
     Float64,
+    Float32,
+    Int64,
     Int32,
+    Int16,
+    Int8,
     ModelVariable,
     String,
     UInt64,
+    UInt32,
+    UInt16,
+    UInt8,
     flatten,
 )
 
@@ -61,9 +68,16 @@ def test_ModelVariable_constructor(causality, initial, variability, name, descri
     "fmi_type,value",
     [
         (Boolean, False),
-        (Int32, 22),
+        (Int64, -64),
+        (Int32, -32),
+        (Int16, -16),
+        (Int8, -8),
         (UInt64, py_types['UInt64'](23)),
-        (Float64, 2.0 / 3.0),
+        (UInt32, py_types['UInt32'](23)),
+        (UInt16, py_types['UInt16'](23)),
+        (UInt8, py_types['UInt8'](23)),
+        (Float64, 4.0 / 6.0),
+        (Float32, 2.0 / 3.0),
         (String, "hello_world"),
     ],
 )
@@ -292,10 +306,9 @@ def test_Boolean_to_xml(name, start):
     ],
 )
 def test_Integer_constructor(name, start):
-    r = Int32(name, start)
-
-    assert r.start == start
-
+    for obj in (Int64, Int32, Int16, Int8, UInt64, UInt32, UInt16, UInt8):
+        r = obj(name, start=start)
+        assert r.start == start
 
 @pytest.mark.parametrize(
     "name,start",
@@ -305,10 +318,11 @@ def test_Integer_constructor(name, start):
     ],
 )
 def test_Integer_to_xml(name, start):
-    r = Int32(name, start)
-    xml = r.to_xml()
-    if start is not None:
-        assert xml.attrib["start"] == str(start)
+    for obj in (Int64, Int32, Int16, Int8, UInt64, UInt32, UInt16, UInt8):
+        r = obj(name, start=start)
+        xml = r.to_xml()
+        if start is not None:
+            assert xml.attrib["start"] == str(start)
 
 
 @pytest.mark.parametrize(
@@ -415,6 +429,7 @@ if __name__ == "__main__":
     if retcode == 0:
         retcode = pytest.main(["-rA", "-v", "--rootdir", "../", "--show", "False", __file__])
         assert retcode == 0, f"Non-zero return code {retcode}"
+    # test_Integer_constructor("myInt", start=-2)
     # test_array_to_xml("array1", [1.0, 2.0, 3.0, 4.0], [4])
     # test_array_to_xml("array2", [1.0, 2.0, 3.0, 4.0], [2, 2])
     # test_array_output_to_xml("array1", [1.0, 2.0, 3.0, 4.0], [4])

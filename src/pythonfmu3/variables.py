@@ -43,7 +43,7 @@ py_types: dict[str, type] = {
     "Int8": np.int8,
     "UInt8": np.uint8,
     "Int16": np.int16,
-    "Uint16": np.uint16,
+    "UInt16": np.uint16,
     "Int32": np.int32,
     "UInt32": np.uint32,
     "Int64": np.int64,
@@ -272,6 +272,7 @@ class Arrayable:
 
 
 class Float64(ModelVariable, Arrayable):
+    """Define a Float64 variable. Serves also as template for all other Float* if _type is adapted."""
     def __init__(
         self,
         name: str,
@@ -279,12 +280,13 @@ class Float64(ModelVariable, Arrayable):
         derivative: Any | None = None,
         dimensions: list[Dimension] = [],
         unit: str | None = None,
+        _type: str = "Float64",
         **kwargs,
     ):
         ModelVariable.__init__(self, name, **kwargs)
         Arrayable.__init__(self, dimensions)
         self.__attrs = {"start": start, "derivative": derivative}
-        self._type = "Float64"
+        self._type = _type
         self._unit = unit
 
     @property
@@ -329,57 +331,25 @@ class Float64(ModelVariable, Arrayable):
 class Float32(Float64):
     def __init__(
         self,
-        **kwargs,
-    ):
-        super().__init__(**kwargs)
-        self._type = "Float32"
-
-class Int32(ModelVariable, Arrayable):
-    def __init__(
-        self,
         name: str,
-        start: Any | None = None,
-        dimensions: list[Dimension] = [],
         **kwargs,
     ):
-        ModelVariable.__init__(self, name, **kwargs)
-        Arrayable.__init__(self, dimensions, **kwargs)
-        self.__attrs = {"start": start}
-        self._type = "Int32"
-
-    @property
-    def start(self) -> Any | None:
-        return self.__attrs["start"]
-
-    @start.setter
-    def start(self, value: int):
-        self.__attrs["start"] = value
-
-    def to_xml(self) -> Element:
-        attrib = dict()
-        for key, value in self.__attrs.items():
-            if value is not None:
-                attrib[key] = self.get_start_str(value)
-        self._extras = attrib
-        parent = super().to_xml()
-
-        parent.extend(self.dimensions_xml())
-
-        return parent
-
+        super().__init__( name=name, _type="Float32", **kwargs)
 
 class Int64(ModelVariable, Arrayable):
+    """Define a Int32 variable. Serves also as template for all other Int* if _type is adapted."""
     def __init__(
         self,
         name: str,
         start: Any | None = None,
         dimensions: list[Dimension] = [],
+        _type: str = "Int64",
         **kwargs,
     ):
         ModelVariable.__init__(self, name, **kwargs)
         Arrayable.__init__(self, dimensions, **kwargs)
         self.__attrs = {"start": start}
-        self._type = "Int64"
+        self._type = _type
 
     @property
     def start(self) -> Any | None:
@@ -400,38 +370,35 @@ class Int64(ModelVariable, Arrayable):
         parent.extend(self.dimensions_xml())
 
         return parent
-#
-class Int8(Int32):
-    def __init__(
-        self,
-        **kwargs,
-    ):
-        super().__init__(**kwargs)
-        self._type = "Int8"
 
-class Int16(Int32):
-    def __init__(self,**kwargs):
-        super().__init__(**kwargs)
-        self._type = "Int16"
 
-# class Int64(Int32):
-#     def __init__(self,**kwargs):
-#         super().__init__(**kwargs)
-#         self._type = "Int64"
+class Int32(Int64):
+    def __init__(self, name: str, **kwargs):
+        super().__init__(name=name, _type="Int32", **kwargs)
+
+class Int16(Int64):
+    def __init__(self,name: str, **kwargs):
+        super().__init__(name, _type="Int16", **kwargs)
+
+class Int8(Int64):
+    def __init__(self, name: str, **kwargs):
+        super().__init__(name=name, _type="Int8", **kwargs)
 
 
 class UInt64(ModelVariable, Arrayable):
+    """Define a UInt64 variable. Serves also as template for all other UInt* if _type is adapted."""
     def __init__(
         self,
         name: str,
         start: Any | None = None,
         dimensions: list[Dimension] = [],
+        _type: str = "UInt64",
         **kwargs,
     ):
         ModelVariable.__init__(self, name, **kwargs)
         Arrayable.__init__(self, dimensions, **kwargs)
         self.__attrs = {"start": start}
-        self._type = "UInt64"
+        self._type = _type
 
     @property
     def start(self) -> Any | None:
@@ -453,30 +420,17 @@ class UInt64(ModelVariable, Arrayable):
 
         return parent
 
-class UInt8(UInt64):
-    def __init__(
-        self,
-        **kwargs,
-    ):
-        super().__init__(**kwargs)
-        self._type = "UInt8"
+class UInt32(UInt64):
+    def __init__(self, name:str, **kwargs):
+        super().__init__(name=name, _type="UInt32", **kwargs)
 
 class UInt16(UInt64):
-    def __init__(
-        self,
-        **kwargs,
-    ):
-        super().__init__(**kwargs)
-        self._type = "UInt16"
+    def __init__(self, name:str, **kwargs):
+        super().__init__(name=name, _type="UInt16", **kwargs)
         
-class UInt32(UInt64):
-    def __init__(
-        self,
-        **kwargs,
-    ):
-        super().__init__(**kwargs)
-        self._type = "UInt32"
-
+class UInt8(UInt64):
+    def __init__(self, name:str, **kwargs):
+        super().__init__(name=name, _type="UInt8", **kwargs)
 
 class Boolean(ModelVariable, Arrayable):
     def __init__(
