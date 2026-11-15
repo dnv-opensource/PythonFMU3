@@ -4,6 +4,7 @@ from pathlib import Path
 import fmpy
 import matplotlib.pyplot as plt
 from fmpy import simulate_fmu
+from helpers import EXAMPLES_DIR
 from simulation import _simulateCS
 
 fmpy.simulation.simulateCS = _simulateCS
@@ -12,7 +13,7 @@ fmpy.simulation.simulateCS = _simulateCS
 def test_run(show: bool):
     # Simulate the PID controller FMU
     result = simulate_fmu(
-        filename=Path(__file__).parent.resolve().parent / "examples" / "TwoState.fmu",
+        filename=EXAMPLES_DIR / "TwoState.fmu",
         start_time=0.0,
         stop_time=10.0,
         step_size=0.01,
@@ -37,7 +38,8 @@ def test_run(show: bool):
 
 
 if __name__ == "__main__":
-    # retcode = pytest.main(["-rA", "-v", "--rootdir", "../", "--show", "True", __file__])
-    # assert retcode == 0, f"Non-zero return code {retcode}"
+    retcode = 1
+    if retcode == 0:
+        retcode = pytest.main(["-rA", "-v", "--rootdir", "../", "--show", "False", __file__])
+        assert retcode == 0, f"Non-zero return code {retcode}"
     test_run(show=True)
-    # test_py_type()

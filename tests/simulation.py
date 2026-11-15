@@ -181,7 +181,6 @@ def _simulateCS(
                 communicationStepSize=communication_step_size,
                 noSetFMUStatePriorToCurrentPoint=False
             )
-
             if earlyReturn and not early_return_allowed:
                 raise Exception("FMU returned early from doStep() but Early Return is not allowed.")
 

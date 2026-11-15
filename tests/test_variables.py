@@ -133,7 +133,6 @@ def test_ModelVariable_setter(fmi_type, value):
     assert [getattr(val, "value", val) for val in getattr(slave, f"get_{fmi_type_name}")([0])] == [value]
 
 
-@pytest.mark.requirements("numpy")
 @pytest.mark.parametrize(
     "fmi_type,value,dims",
     [
@@ -159,7 +158,6 @@ def test_ModelVariable_getter_array(fmi_type, value, dims):
     assert [getattr(val, "value", val) for val in getattr(slave, f"get_{fmi_type_name}")([0])] == value
 
 
-@pytest.mark.requirements("numpy")
 @pytest.mark.parametrize(
     "fmi_type,value,dims",
     [
@@ -381,7 +379,6 @@ def test_String_to_xml(name, start):
         assert start_elements[0].attrib["value"] == str(start)
 
 
-@pytest.mark.requirements("numpy")
 @pytest.mark.parametrize(
     "name,start,dims",
     [("array1", [1.0, 2.0, 3.0, 4.0], [4]), ("array2", [1.0, 2.0, 3.0, 4.0], [2, 2])],
@@ -397,7 +394,6 @@ def test_array_to_xml(name, start, dims):
         assert [int(xml_dim.attrib["start"]) for xml_dim in xml_dims] == dims
 
 
-@pytest.mark.requirements("numpy")
 @pytest.mark.parametrize(
     "name,start,dims",
     [
@@ -430,6 +426,7 @@ if __name__ == "__main__":
         retcode = pytest.main(["-rA", "-v", "--rootdir", "../", "--show", "False", __file__])
         assert retcode == 0, f"Non-zero return code {retcode}"
     # test_Integer_constructor("myInt", start=-2)
+    # test_ModelVariable_getter_array(Float64, [1.0, 2.0, 3.0, 4.0], [2, 2])
     # test_array_to_xml("array1", [1.0, 2.0, 3.0, 4.0], [4])
     # test_array_to_xml("array2", [1.0, 2.0, 3.0, 4.0], [2, 2])
     # test_array_output_to_xml("array1", [1.0, 2.0, 3.0, 4.0], [4])

@@ -61,7 +61,7 @@ classifiers = [
 ]
 dependencies = [
     "fmpy>=0.3.21",
-    "pyqt6>=6.10",
+#    "pyqt6>=6.10",
     "xmlschema>=4.3",
 ]
 
@@ -98,7 +98,6 @@ dev = [
     "furo>=2025.12",
     "scipy-stubs>=1.17.1",
     "matplotlib>=3.10",
-    "types-defusedxml",
     "rope>=1.15.0",
 ]
 

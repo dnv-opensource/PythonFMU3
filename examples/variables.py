@@ -83,8 +83,8 @@ class Variables3(Fmi3Slave):
         _output = Fmi3Causality.output
         self.register_variable(Boolean("bool_in", variability=_discrete, causality=_input, start=True))
         self.register_variable(String("str_in", variability=_discrete, causality=_input, start="Hello World"))
-        self.register_variable(Float32("float32_in", variability=_continuous, causality=_input, start="3.2"))
         self.register_variable(Float64("float64_in", variability=_continuous, causality=_input, start="6.4"))
+        self.register_variable(Float32("float32_in", variability=_continuous, causality=_input, start="3.2"))
         self.register_variable(Int64("int64_in", variability=_discrete, causality=_input, start="-64"))
         self.register_variable(Int32("int32_in", variability=_discrete, causality=_input, start="-32"))
         self.register_variable(Int16("int16_in", variability=_discrete, causality=_input, start="-16"))
@@ -101,8 +101,8 @@ class Variables3(Fmi3Slave):
 
         #self.register_variable(Boolean("bool_out", variability=_discrete, causality=_input))#, start=True))
         self.register_variable(String("str_out", variability=_discrete, causality=_input, start="Hello World"))
-        self.register_variable(Float32("float32_out", variability=_continuous, causality=_input, start="3.2"))
         self.register_variable(Float64("float64_out", variability=_continuous, causality=_input, start="6.4"))
+        self.register_variable(Float32("float32_out", variability=_continuous, causality=_input, start="3.2"))
         self.register_variable(Int64("int64_out", variability=_discrete, causality=_input, start="-64"))
         self.register_variable(Int32("int32_out", variability=_discrete, causality=_input, start="-32"))
         self.register_variable(Int16("int16_out", variability=_discrete, causality=_input, start="-16"))

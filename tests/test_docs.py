@@ -46,7 +46,7 @@ def test_readme():
 def test_cosimulation_examples():
     """Test that all Python examples in usage.md actually work"""
     test_dir = pathlib.Path(__file__).parent.resolve()
-    usage_file = test_dir.parent / "docs" / "usage.md"
+    usage_file = test_dir.parent / "docs/source/usage.md"
 
     # Extract Python code
     code_blocks = extract_python_code_from_md(usage_file)
@@ -75,7 +75,7 @@ def test_cosimulation_examples():
 def test_model_exchange_examples():
     """Test Model Exchange examples"""
     test_dir = pathlib.Path(__file__).parent.resolve()
-    mx_file = test_dir.parent / "docs" / "usageMX.md"
+    mx_file = test_dir.parent / "docs/source/usageMX.md"
 
     code_blocks = extract_python_code_from_md(mx_file)
 
@@ -105,3 +105,10 @@ if __name__ == "__main__":
 
     #test_cosimulation_examples()
     test_model_exchange_examples()
+    
+if __name__ == "__main__":
+    retcode = 1
+    if retcode == 0:
+        retcode = pytest.main(["-rA", "-v", "--rootdir", "../", "--show", "False", __file__])
+        assert retcode == 0, f"Non-zero return code {retcode}"
+    test_cosimulation_examples()

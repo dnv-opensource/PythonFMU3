@@ -120,7 +120,7 @@ class TwoState(Fmi3Slave):
 
         Returns:
             discreteStatesNeedUpdate: True; the Orchestrator must stay in Event Mode for another event iteration,
-               starting a new super-dense time instant.
+               starting a new super-dense time instant. Never only return with 'True'!
             terminateSimulation: True; the FMU requests to stop the simulation.
             nominalsOfContinuousStatesChanged: True; use only for ME!
             valuesOfContinuousStatesChanged: False; use only for configuration changes
@@ -137,7 +137,7 @@ class TwoState(Fmi3Slave):
         self.next_interval = self.get_next_interval()
         self.next_time = self.time + self.next_interval
         # self.log(f"Update {self.instance_name}(TwoState) @{self.time} => {self.state}. NextT:{self.next_time}")            
-        return Fmi3UpdateDiscreteStatesResult(discreteStatesNeedUpdate=True,
+        return Fmi3UpdateDiscreteStatesResult(discreteStatesNeedUpdate=False,
                                               nextEventTimeDefined=True,
                                               nextEventTime=self.next_time)
 

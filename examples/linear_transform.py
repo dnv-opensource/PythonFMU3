@@ -77,23 +77,10 @@ class LinearTransform(Fmi3Slave):
         """Call by Orchestrator to update discrete states in super-dense time instant,
         returning info to the Orchestrator
 
-        Returns:
-            discreteStatesNeedUpdate: True; the Orchestrator must stay in Event Mode for another event iteration,
-               starting a new super-dense time instant.
-            terminateSimulation: True; the FMU requests to stop the simulation.
-            nominalsOfContinuousStatesChanged: True; use only for ME!
-            valuesOfContinuousStatesChanged: False; use only for configuration changes
-            nextEventTimeDefined: True; the next time event is known and nextEventTime has a valid value.
-            nextEventTime: contains the absolute time of the next time event if nextEventTimeDefined = True.
-               The importer must compute up to nextEventTime (or if needed slightly further)
-               and then enter Event Mode using EnterEventMode.
-               The FMU must handle this time event during the Event Mode that is entered
-               by the first call to EnterEventMode, at or after nextEventTime.
-               If another (e.g. state event) event happens before that nextEventTime,
-               the previous definition of nextEventTime becomes obsolete.
+        Returns: see definition of Fmi3UpdateDiscreteStatesResult
         """
         self.y = self.transform(self.x)
-        return Fmi3UpdateDiscreteStatesResult(discreteStatesNeedUpdate = True)
+        return Fmi3UpdateDiscreteStatesResult()
 
     def transform(self, x:float):
         return self.a + self.b* x
