@@ -2,13 +2,13 @@ import argparse
 
 from pythonfmu3 import builder, deploy
 
-from ._version import __version__
+from importlib.metadata import version
 
 
 def cli_main():
     parser = argparse.ArgumentParser(prog="pythonfmu")
 
-    parser.add_argument("-V", "--version", action="version", version=__version__)
+    parser.add_argument("-V", "--version", action="version", version=version)
 
     def default_execution(**kwargs):
         print("A subcommand must be provided.\n")
