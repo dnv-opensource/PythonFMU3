@@ -37,6 +37,10 @@ All changes where implemented in the branch *eis*
 * One step towards satisfying ruff, mypy and pyright. Still there are a lot of comments. All tests are working.
 * Added the remaining Int* and UInt* standard FMI3 variable types. Added suitable tests and the FMU Variables3.fmu containing all variable types
   Clock variables are still missing and Enumeration variables are untested.
+* Added two array variabels to examples/Variables3.fmu
+* Fixed a misunderstanding in update_discrete_states, where it is important to not use discreteStatesNeedsUpdate=True as way to signal that outputs are updated. Use it only to stay in event mode!
+* Made all imports into explicit imports and reduced src/pythonfmu3.__init__.py to nothing.
+* Removed _version.py and replaced pythonfmu3 version retrieval with retrieval from pyproject.toml as single source
 
 
 
