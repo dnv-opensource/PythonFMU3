@@ -53,7 +53,12 @@ py_types: dict[str, type] = {
 }
 
 def fmi_type_version( fmi_type_name:str, fmi_version:int=3) -> bool:
-    """Check whether the FMI type is valid in the given FMI version."""
+    """Check whether the FMI type is valid in the given FMI version.
+
+    Args:
+        fmi_type_name: name of a variable type as listed in py_types
+        fmi_version: main fmi version number of the FMU (as int)
+    """
     if fmi_type_name not in py_types:
         return False
     if fmi_version < 3 and fmi_type_name in ("Real", "Integer", "Boolean", "String", "Enumeration"):
@@ -599,23 +604,4 @@ class Enumeration(ModelVariable, Arrayable):
         parent = super().to_xml()
 
         return parent
-
-# fmi_types: dict[type, Any] = {
-#     #float : Real,
-#     #int : Integer,
-#     bool : Boolean,
-#     str : String,
-#     np.float32 : Float32,
-#     np.float64 : Float64,
-#     np.int8 : Int8,
-#     np.uint8 : UInt8,
-#     np.int16 : Int16,
-#     np.uint16 : UInt16,
-#     np.int32 : Int32,
-#     np.uint32 : UInt32,
-#     np.int64 :Int64,
-#     np.uint64 : UInt64,
-#     # int : Enumeration, ! not unique
-#     # bool : Clock, ! not unique
-# }
 
