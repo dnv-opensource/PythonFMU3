@@ -1,11 +1,7 @@
-from pythonfmu3 import (
-    Float64,
-    Fmi3Causality,
-    Fmi3Initial,
-    Fmi3SlaveBase,
-    Fmi3Variability,
-    ModelExchange,
-)
+from pythonfmu3.variables import Float64
+from pythonfmu3.enums import Fmi3Causality, Fmi3Initial, Fmi3Variability
+from pythonfmu3.fmi3slave import Fmi3SlaveBase
+from pythonfmu3.modelexchange import ModelExchange
 
 
 class Robertson(Fmi3SlaveBase, ModelExchange):

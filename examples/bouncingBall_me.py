@@ -1,15 +1,12 @@
 import sys
 
-from pythonfmu3 import (
-    Float64,
-    Fmi3Causality,
-    Fmi3Initial,
-    Fmi3SlaveBase,
-    Fmi3UpdateDiscreteStatesResult,
-    Fmi3Variability,
-    ModelExchange,
-    Unit,
-)
+from pythonfmu3.variables import Float64
+from pythonfmu3.enums import Fmi3Causality, Fmi3Initial, Fmi3Variability
+from pythonfmu3.fmi3slave import Fmi3SlaveBase
+from pythonfmu3.model_returns import Fmi3UpdateDiscreteStatesResult
+from pythonfmu3.modelexchange import ModelExchange
+from pythonfmu3.unit import Unit
+
 
 EVENT_EPS = 1e-12
 

@@ -1,10 +1,8 @@
-from pythonfmu3.fmi3slave import Float64, Fmi3Slave, String
-
+from pythonfmu3.fmi3slave import Fmi3Slave
 from pythonfmu3.default_experiment import DefaultExperiment
 from pythonfmu3.enums import Fmi3Causality, Fmi3Variability
-
 from pythonfmu3.model_returns import Fmi3StepResult
-
+from pythonfmu3.variables import Float64, String
 
 class PythonSlaveReadFile(Fmi3Slave):
     default_experiment = DefaultExperiment(start_time=0)

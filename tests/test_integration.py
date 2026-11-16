@@ -559,13 +559,13 @@ if __name__ == "__main__":
         assert retcode == 0, f"Non-zero return code {retcode}"
 
     # test_integration_demo()
-    # test_integration_solve_MX()
+    test_integration_solve_MX()
     # test_integration_demo_CS_MX()
     # test_integration_get_serialize_state()
     # test_integration_get_array()
     # test_integration_read_from_file()
     # test_integration_set_array()
-    test_integration_has_local_dep()
+    # test_integration_has_local_dep()
 
 
         

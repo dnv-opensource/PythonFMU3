@@ -1,17 +1,8 @@
 import numpy as np
 
-from pythonfmu3 import (
-    Boolean,
-    Dimension,
-    Float64,
-    Fmi3Causality,
-    Fmi3Slave,
-    Fmi3Status,
-    Fmi3Variability,
-    Int32,
-    Int64,
-    UInt64,
-)
+from pythonfmu3.enums import Fmi3Causality, Fmi3Status, Fmi3Variability
+from pythonfmu3.fmi3slave import Fmi3Slave
+from pythonfmu3.variables import Boolean, Dimension, Float64, Int32, Int64, UInt64
 
 SIZE = 10
 

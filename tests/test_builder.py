@@ -11,8 +11,8 @@ from attrs import asdict
 from fmpy import read_model_description
 
 import pythonfmu3
-from pythonfmu3 import builder, deploy
-from pythonfmu3.builder import FmuBuilder, get_platform
+from pythonfmu3.deploy import create_command_parser
+from pythonfmu3.builder import FmuBuilder, get_platform, create_command_parser
 from pythonfmu3.fmi3slave import Fmi3ModelOptionsCS
 
 PROJECT_TEST_CASES = [
@@ -215,7 +215,7 @@ def test_cli():
         description="Build an FMU from a Python script.",
         help="Build an FMU from a Python script.",
     )
-    builder.create_command_parser(build_parser)
+    create_command_parser(build_parser)
 
     deploy_parser = subparsers.add_parser(
         "deploy",
@@ -232,7 +232,7 @@ def test_cli():
         """,
         help="Install Python FMU dependencies.",
     )
-    deploy.create_command_parser(deploy_parser)
+    create_command_parser(deploy_parser)
 
     options = vars(parser.parse_args())
 
@@ -246,7 +246,7 @@ def test_cli():
 
     assert isinstance(vars(args), dict), "Arguments converted to dict, which is also used in cli"
 
-    dest = builder.FmuBuilder.build_FMU(
+    dest = FmuBuilder.build_FMU(
         script_file=py_file,
         dest=Path(__file__).parent.resolve() / "test_working_directory",
         # project_files: Iterable[FilePath] = set(),
@@ -275,10 +275,10 @@ def test_model_options():
 
 if __name__ == "__main__":
     """Possibility to run single or all tests from the IDE."""
-    retcode = 0
+    retcode = 1
     if retcode == 0:
         retcode = pytest.main(["-rA", "-v", "--rootdir", "../", "--show", "False", __file__])
         assert retcode == 0, f"Non-zero return code {retcode}"
-    #test_zip_content()
+    test_zip_content()
     # test_cli()
     # test_model_options()

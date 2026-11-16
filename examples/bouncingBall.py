@@ -2,7 +2,7 @@ import logging
 
 import numpy as np
 
-from pythonfmu3 import Fmi3Slave
+from pythonfmu3.fmi3slave import Fmi3Slave
 from pythonfmu3.cosimulation import Fmi3StepResult
 from pythonfmu3.enums import Fmi3Causality, Fmi3Initial, Fmi3Variability
 from pythonfmu3.model_options import Fmi3ModelOptionsCS

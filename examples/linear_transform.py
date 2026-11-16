@@ -7,7 +7,7 @@
 """
 import numpy as np
 from collections import namedtuple
-from pythonfmu3 import Fmi3Slave
+from pythonfmu3.fmi3slave import Fmi3Slave
 from pythonfmu3.enums import (
     Fmi3IntervalVariability,
     Fmi3Causality,

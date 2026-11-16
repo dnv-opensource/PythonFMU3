@@ -1,6 +1,8 @@
 import numpy as np
 
-from pythonfmu3 import Dimension, Float64, Fmi3Causality, Fmi3Slave, Fmi3Variability
+from pythonfmu3.variables import Dimension, Float64
+from pythonfmu3.enums import Fmi3Causality, Fmi3Variability
+from pythonfmu3.fmi3slave import Fmi3Slave
 
 
 class LinearTransform2x2(Fmi3Slave):

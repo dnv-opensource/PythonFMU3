@@ -1,13 +1,7 @@
-from pythonfmu3.fmi3slave import (
-    Boolean,
-    Float64,
-    Fmi3Causality,
-    Fmi3Slave,
-    Fmi3Variability,
-    Int32,
-    String,
-)
+from pythonfmu3.enums import Fmi3Causality, Fmi3Variability
+from pythonfmu3.fmi3slave import Fmi3Slave
 from pythonfmu3.model_returns import Fmi3StepResult
+from pythonfmu3.variables import Boolean, Float64, Int32, String
 
 
 class Container:
@@ -34,33 +28,17 @@ class PythonSlave(Fmi3Slave):
         self.time = 0
 
         self.register_variable(
-            Float64(
-                "time",
-                causality=Fmi3Causality.independent,
-                variability=Fmi3Variability.continuous,
-            )
+            Float64("time", causality=Fmi3Causality.independent, variability=Fmi3Variability.continuous)
         )
         self.register_variable(
-            Int32(
-                "intParam",
-                causality=Fmi3Causality.parameter,
-                variability=Fmi3Variability.tunable,
-            )
+            Int32("intParam", causality=Fmi3Causality.parameter, variability=Fmi3Variability.tunable)
         )
         self.register_variable(Float64("realIn", causality=Fmi3Causality.input))
         self.register_variable(
-            Boolean(
-                "booleanParameter",
-                causality=Fmi3Causality.parameter,
-                variability=Fmi3Variability.tunable,
-            )
+            Boolean("booleanParameter", causality=Fmi3Causality.parameter, variability=Fmi3Variability.tunable)
         )
         self.register_variable(
-            String(
-                "stringParameter",
-                causality=Fmi3Causality.parameter,
-                variability=Fmi3Variability.tunable,
-            )
+            String("stringParameter", causality=Fmi3Causality.parameter, variability=Fmi3Variability.tunable)
         )
 
         self.register_variable(Int32("intOut", causality=Fmi3Causality.output))
@@ -73,17 +51,12 @@ class PythonSlave(Fmi3Slave):
         self.container.subContainer = sub = Container()
         sub.someInteger = -15
         self.register_variable(
-            Float64(
-                "container.someReal",
-                causality=Fmi3Causality.parameter,
-                variability=Fmi3Variability.tunable,
-            )
+            Float64("container.someReal", causality=Fmi3Causality.parameter, variability=Fmi3Variability.tunable)
         )
         self.register_variable(
-            Int32(
-                "container.subContainer.someInteger",
-                causality=Fmi3Causality.parameter,
-                variability=Fmi3Variability.tunable,
+            Int32("container.subContainer.someInteger", 
+                  causality=Fmi3Causality.parameter,
+                  variability=Fmi3Variability.tunable,
             )
         )
 
@@ -91,3 +64,18 @@ class PythonSlave(Fmi3Slave):
         self, current_time: float, step_size: float, no_set_fmu_state_prior_to_current_point: bool) -> Fmi3StepResult:
         self.realOut = current_time + step_size
         return True
+
+if __name__ == "__main__":
+    from pathlib import Path
+    from pythonfmu3.builder import FmuBuilder
+    from fmpy import read_model_description
+
+    dest = FmuBuilder.build_FMU(
+        script_file = Path(__file__),
+        dest = Path(__file__).parent.resolve(),
+        #project_files: Iterable[FilePath] = set(),
+        #documentation_folder: Optional[FilePath] = None,
+        #terminals : Optional[FilePath] = None,
+    )
+    read_model_description(dest, True, True, True)
+    print(f"Generated {dest}. Validated modelDescription.")

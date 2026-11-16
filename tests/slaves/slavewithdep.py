@@ -2,8 +2,10 @@ import math
 
 from localmodule import get_amplitude, get_time_constant
 
-from pythonfmu3.fmi3slave import Float64, Fmi3Causality, Fmi3Slave, Fmi3Variability
+from pythonfmu3.enums import Fmi3Causality, Fmi3Variability
+from pythonfmu3.fmi3slave import Fmi3Slave
 from pythonfmu3.model_returns import Fmi3StepResult
+from pythonfmu3.variables import Float64
 
 
 class PythonSlaveWithDep(Fmi3Slave):

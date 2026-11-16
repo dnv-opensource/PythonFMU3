@@ -2,7 +2,8 @@ from importlib.metadata import version
 import logging
 import pytest
 
-from pythonfmu3 import Fmi3Slave, ModelExchange
+from pythonfmu3.fmi3slave import Fmi3Slave
+from pythonfmu3.modelexchange import ModelExchange
 from pythonfmu3.variables import py_types, fmi_type, fmi_type_version
 
 LOGGER = logging.getLogger(__name__)
@@ -181,7 +182,7 @@ def test_fmi3slave_model_exchange():
 
 if __name__ == "__main__":
     """Possibility to run single or all tests from the IDE."""
-    retcode = 1
+    retcode = 0
     if retcode == 0:
         retcode = pytest.main(["-rA", "-v", "--rootdir", "../", "--show", "False", __file__])
         assert retcode == 0, f"Non-zero return code {retcode}"

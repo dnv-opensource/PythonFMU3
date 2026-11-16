@@ -94,7 +94,10 @@ optional arguments:
 ### Write the script
 
 ```python
-from pythonfmu3 import Fmi3Causality, Fmi3Slave, Boolean, Int32, Float64, String
+from pythonfmu3.enums import Fmi3Causality
+from pythonfmu3.fmi3slave import Fmi3Slave
+from pythonfmu3.model_returns import Fmi3StepResult
+from pythonfmu3.variables import Boolean, Int32, Float64, String
 
 
 class PythonSlave(Fmi3Slave):
@@ -120,7 +123,7 @@ class PythonSlave(Fmi3Slave):
         # self.register_variable(Float64("myReal", causality=Fmi3Causality.output, getter=lambda: self.realOut, setter=lambda v: set_real_out(v))
 
     def do_step(self, current_time, step_size):
-        return True
+        return Fmi3StepResult()
 ```
 
 ### Create the FMU
@@ -141,7 +144,10 @@ To create a model exchange FMU you must inherit from `Fmi3SlaveBase` and one of 
 ### Write the script
 
 ```python
-from pythonfmu3 import Fmi3Causality, Fmi3SlaveBase, Float64, ModelExchange
+from pythonfmu3.enums import Fmi3Causality
+from pythonfmu3.fmi3slave import Fmi3SlaveBase
+from pythonfmu3.modelexchange import ModelExchange
+from pythonfmu3.variables import Float64
 from typing import List
 
 

@@ -83,6 +83,7 @@ def test_model_exchange_examples():
     exec("from pythonfmu3 import *", namespace)
 
     for i, code in enumerate(code_blocks):
+        print("CODE", i, code)
         try:
             exec(code, namespace)
         except Exception as e:
@@ -98,17 +99,11 @@ def test_model_exchange_examples():
 
 if __name__ == "__main__":
     """Possibility to run single or all tests from the IDE."""
-    retcode = 1
+    retcode = 0
     if retcode == 0:
         retcode = pytest.main(["-rA", "-v", "--rootdir", "../", "--show", "False", __file__])
         assert retcode == 0, f"Non-zero return code {retcode}"
 
-    #test_cosimulation_examples()
-    test_model_exchange_examples()
-    
-if __name__ == "__main__":
-    retcode = 1
-    if retcode == 0:
-        retcode = pytest.main(["-rA", "-v", "--rootdir", "../", "--show", "False", __file__])
-        assert retcode == 0, f"Non-zero return code {retcode}"
-    test_cosimulation_examples()
+    test_readme()
+    # test_cosimulation_examples()
+    # test_model_exchange_examples()

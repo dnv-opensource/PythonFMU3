@@ -12,7 +12,7 @@ from typing import Any, TypeAlias
 import sys
 from xml.etree.ElementTree import Element
 
-from .enums import Fmi3Causality, Fmi3Initial, Fmi3IntervalVariability, Fmi3Variability
+from pythonfmu3.enums import Fmi3Causality, Fmi3Initial, Fmi3IntervalVariability, Fmi3Variability
 
 FMIScalar : TypeAlias = np.generic | bool | int | float | str
 

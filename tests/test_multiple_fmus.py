@@ -18,10 +18,13 @@ def mapped(md):
     return m
 
 
+
 @pytest.mark.integration
 def test_integration_multiple_fmus():
     slave1_code = """import math
-from pythonfmu3 import Fmi3Slave, Fmi3Causality, Fmi3Variability, Int32, Float64, Boolean, String
+from pythonfmu3.fmi3slave import Fmi3Slave
+from pythonfmu3.enums import Fmi3Causality, Fmi3Variability
+from pythonfmu3.variables import Int32, Float64, Boolean, String
 
 
 class Slave1(Fmi3Slave):
@@ -42,8 +45,10 @@ class Slave1(Fmi3Slave):
         return True
 """
 
-    slave2_code = """from pythonfmu3 import Fmi3Slave, Fmi3Causality, Fmi3Variability, Int32, Float64, Boolean, String
-
+    slave2_code = """
+from pythonfmu3.fmi3slave import Fmi3Slave
+from pythonfmu3.enums import Fmi3Causality, Fmi3Variability
+from pythonfmu3.variables import Int32, Float64, Boolean, String
 
 class Slave2(Fmi3Slave):
 
@@ -137,5 +142,5 @@ if __name__ == "__main__":
         retcode = pytest.main(["-rA", "-v", "--rootdir", "../", "--show", "False", __file__])
         assert retcode == 0, f"Non-zero return code {retcode}"
 
-test_integration_multiple_fmus()
+    test_integration_multiple_fmus()
 

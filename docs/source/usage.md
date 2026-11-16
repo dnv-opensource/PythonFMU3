@@ -48,8 +48,10 @@ self.register_variable(
 
 ### PID Controller Example
 ```python
-from pythonfmu3 import Fmi3Causality, Fmi3Slave, Float64
+from pythonfmu3.enums import Fmi3Causality
+from pythonfmu3.fmi3slave import Fmi3Slave
 from pythonfmu3.model_returns import Fmi3StepResult
+from pythonfmu3.variables import Float64
 
 class PIDController(Fmi3Slave):
     """PID Controller implementation"""
@@ -123,7 +125,7 @@ Units can be added to this example through the `Unit` class along with `register
 
 <!-- skip-test -->
 ```python
-from pythonfmu3 import Unit
+from pythonfmu3.unit import Unit
 
 velocity_unit = Unit(name="m/s", m=1, s=-1)
 ```
@@ -141,7 +143,9 @@ If numpy is installed, arrays may be used with,
 ```python
 import numpy as np
 
-from pythonfmu3 import Dimension, Float64, Fmi3Causality, Fmi3Slave, Fmi3Variability
+from pythonfmu3.variables import Dimension, Float64
+from pythonfmu3.fmi3slave import Fmi3Slave
+from pythonfmu3.enums import Fmi3Causality, Fmi3Variability
 
 
 class LinearTransform2x2(Fmi3Slave):
@@ -211,7 +215,8 @@ The `do_step` function can also return a tuple of flags, corresponding to those 
 
 
 ```python
-from pythonfmu3 import Fmi3Status, Fmi3StepResult
+from pythonfmu3.enums import Fmi3Status
+from pythonfmu3.model_returns import Fmi3StepResult
 
 
 def do_step(self, current_time, step_size):

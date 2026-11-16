@@ -1,14 +1,6 @@
-from pythonfmu3 import (
-    Boolean,
-    Float64,
-    Fmi3Causality,
-    Fmi3Slave,
-    Fmi3Status,
-    Fmi3Variability,
-    Int32,
-    Int64,
-    UInt64,
-)
+from pythonfmu3.variables import Boolean, Float64, Int32, Int64, UInt64
+from pythonfmu3.enums import Fmi3Causality, Fmi3Variability, Fmi3Status
+from pythonfmu3.fmi3slave import Fmi3Slave
 
 TYPES = [UInt64, Float64, Boolean, Int32, Int64]
 CAUSALITY = [Fmi3Causality.output, Fmi3Causality.input]

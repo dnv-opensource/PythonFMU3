@@ -1,4 +1,6 @@
-from pythonfmu3 import Fmi3Causality, Fmi3Slave, Float64
+from pythonfmu3.enums import Fmi3Causality
+from pythonfmu3.fmi3slave import Fmi3Slave
+from pythonfmu3.variables import Float64
 from pythonfmu3.model_returns import Fmi3StepResult
 
 class PIDController(Fmi3Slave):

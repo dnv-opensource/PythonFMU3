@@ -2,7 +2,7 @@ import logging
 import numpy as np
 import numpy.typing as npt
 from scipy import integrate
-from pythonfmu3 import Fmi3Slave
+from pythonfmu3.fmi3slave import Fmi3Slave
 from pythonfmu3.cosimulation import Fmi3StepResult
 from pythonfmu3.enums import Fmi3Variability, Fmi3Causality, Fmi3Initial, Fmi3Status
 from pythonfmu3.variables import Boolean, Float64, Int32, UInt64, Dimension

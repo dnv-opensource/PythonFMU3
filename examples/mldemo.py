@@ -1,6 +1,8 @@
 import pathlib  # pathlib is included in the Python Standard Library
 
-from pythonfmu3 import Float64, Fmi3Causality, Fmi3Slave
+from pythonfmu3.variables import Float64
+from pythonfmu3.enums import Fmi3Causality
+from pythonfmu3.fmi3slave import Fmi3Slave
 
 try:
     import numpy as np

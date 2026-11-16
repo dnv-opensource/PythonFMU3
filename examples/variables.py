@@ -1,7 +1,7 @@
 """Defines various variable types and shapes and exports them."""
 import numpy as np
 import numpy.typing as npt
-from pythonfmu3 import Fmi3Slave
+from pythonfmu3.fmi3slave import Fmi3Slave
 from pythonfmu3.enums import (
     Fmi3IntervalVariability,
     Fmi3Causality,

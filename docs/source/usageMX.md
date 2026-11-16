@@ -74,18 +74,13 @@ def get_continuous_state_derivatives(self):
 ## Example
 
 ```python
-from pythonfmu3 import (
-    Fmi3Causality,
-    ModelExchange,
-    Fmi3Variability,
-    Fmi3SlaveBase,
-    Fmi3Status,
-    Float64,
-    Fmi3Initial,
-    Unit,
-    Float64Type,
-    Fmi3StepResult,
-)
+from pythonfmu3.enums import Fmi3Causality, Fmi3Initial, Fmi3Status, Fmi3Variability
+from pythonfmu3.fmi3slave import Fmi3SlaveBase
+from pythonfmu3.modelexchange import ModelExchange
+from pythonfmu3.model_returns import Fmi3StepResult
+from pythonfmu3.unit import Unit
+from pythonfmu3.variables import Float64
+from pythonfmu3.variable_types import Float64Type
 
 from typing import List
 
@@ -242,15 +237,11 @@ def update_discrete_states(self):
 ### Example
 
 ```python
-from pythonfmu3 import (
-    Fmi3Causality,
-    Fmi3Variability,
-    Fmi3SlaveBase,
-    ModelExchange,
-    Float64,
-    Fmi3Initial,
-    Fmi3UpdateDiscreteStatesResult,
-)
+from pythonfmu3.enums import Fmi3Causality, Fmi3Initial, Fmi3Variability
+from pythonfmu3.fmi3slave import Fmi3SlaveBase
+from pythonfmu3.modelexchange import ModelExchange
+from pythonfmu3.model_returns import Fmi3UpdateDiscreteStatesResult
+from pythonfmu3.variables import Float64
 
 from typing import List
 

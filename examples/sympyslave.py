@@ -1,4 +1,6 @@
-from pythonfmu3.fmi3slave import Float64, Fmi3Causality, Fmi3Slave, Fmi3Variability
+from pythonfmu3.variables import Float64
+from pythonfmu3.enums import Fmi3Causality, Fmi3Variability
+from pythonfmu3.fmi3slave import Fmi3Slave
 
 try:
     from sympy import exp, symbols

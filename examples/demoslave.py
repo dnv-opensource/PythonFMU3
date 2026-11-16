@@ -1,4 +1,6 @@
-from pythonfmu3 import Float64, Fmi3Causality, Fmi3Slave, Fmi3Variability, String
+from pythonfmu3.fmi3slave import Fmi3Slave
+from pythonfmu3.variables import Float64, String
+from pythonfmu3.enums import Fmi3Causality,  Fmi3Variability
 
 
 class Resistor(Fmi3Slave):

@@ -13,9 +13,8 @@ from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 import xml.etree.ElementTree as ET
 
-from pythonfmu3.fmi3slave import Fmi3SlaveBase
+from pythonfmu3.fmi3slave import Fmi3SlaveBase, Fmi3Slave
 from pythonfmu3.model_options import Fmi3ModelOptionsCS, Fmi3ModelOptionsME
-
 from pythonfmu3.osutil import get_lib_extension, get_platform
 
 FilePath = str | Path

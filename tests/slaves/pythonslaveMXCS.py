@@ -1,13 +1,9 @@
-from pythonfmu3 import (
-    CoSimulation,
-    Float64,
-    Fmi3Causality,
-    Fmi3Initial,
-    Fmi3SlaveBase,
-    Fmi3StepResult,
-    Fmi3Variability,
-    ModelExchange,
-)
+from pythonfmu3.cosimulation import CoSimulation
+from pythonfmu3.enums import Fmi3Causality, Fmi3Initial, Fmi3Variability
+from pythonfmu3.fmi3slave import Fmi3SlaveBase
+from pythonfmu3.model_returns import Fmi3StepResult
+from pythonfmu3.modelexchange import ModelExchange
+from pythonfmu3.variables import Float64
 
 
 class Dahlquist(Fmi3SlaveBase, ModelExchange, CoSimulation):

@@ -1,15 +1,9 @@
 import enum
 
-from pythonfmu3 import (
-    Enumeration,
-    EnumerationType,
-    Float64,
-    Fmi3Causality,
-    Fmi3Initial,
-    Fmi3Slave,
-    Fmi3Variability,
-)
-
+from pythonfmu3.enums import Fmi3Causality, Fmi3Initial, Fmi3Variability
+from pythonfmu3.fmi3slave import Fmi3Slave
+from pythonfmu3.variables import Enumeration, Float64
+from pythonfmu3.variable_types import EnumerationType
 
 class Enum(Fmi3Slave):
     def __init__(self, **kwargs):

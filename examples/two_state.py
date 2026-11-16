@@ -8,7 +8,7 @@
 """
 import logging
 import numpy as np
-from pythonfmu3 import Fmi3Slave
+from pythonfmu3.fmi3slave import Fmi3Slave
 from pythonfmu3.enums import Fmi3IntervalVariability, Fmi3Causality, Fmi3Status
 from pythonfmu3.variables import Boolean, Float64, Int32, Clock
 from pythonfmu3.model_returns import Fmi3StepResult, Fmi3UpdateDiscreteStatesResult
