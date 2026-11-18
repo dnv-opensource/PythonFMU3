@@ -12,12 +12,12 @@
 
 This project is a fork of the original PythonFMU repository available at https://github.com/NTNU-IHB/PythonFMU, which was used as the basis for adding support for FMI 3.0. While we have made efforts to expand the functionality of this project, it currently has some limitations and does not support all the features of FMI 3.0. We would like to acknowledge and give credit to the original PythonFMU project for their contributions to this work.
 
-### Support:
+## Support:
 
 Please take a look at the examples to see the supported features.
 We currently support both the Model exchange and Cosimulation Interfaces.
 
-### How do I build an FMU from python code?
+## How do I build an FMU from python code?
 
 1. Install `pythonfmu3` package:
 
@@ -29,10 +29,10 @@ pip install pythonfmu3
 3. Run `pythonfmu3 build` to create the fmu.
 
 ```
-usage: pythonfmu3 build [-h] -f SCRIPT_FILE [-d DEST] [--doc DOCUMENTATION_FOLDER] [--terminals TERMINALS_FILE] [--no-external-tool]
-                       [--no-variable-step] [--interpolate-inputs] [--only-one-per-process] [--handle-state]
-                       [--serialize-state] [--use-memory-management]
-                       [Project files [Project files ...]]
+usage: pythonfmu3 build [-h] SCRIPT_FILE [-d DEST] [--doc DOCUMENTATION_FOLDER] [--terminals TERMINALS_FILE] [--no-external-tool]
+                        [--no-variable-step] [--interpolate-inputs] [--only-one-per-process] [--handle-state]
+                        [--serialize-state] [--use-memory-management]
+                        [Project files [Project files ...]]
 
 Build an FMU from a Python script.
 
@@ -57,7 +57,7 @@ optional arguments:
   --serialize-state     If given, canSerializeFMUstate=true
 ```
 
-### How do I build an FMU from python code with third-party dependencies?
+## How do I build an FMU from python code with third-party dependencies?
 
 Often, Python scripts depends on non-builtin libraries like `numpy`, `scipy`, etc.
 _PythonFMU_ does not package a full environment within the FMU.
@@ -66,15 +66,15 @@ However, you can package a `requirements.txt` or `environment.yml` file within y
 1. Install _pythonfmu_ package: `pip install pythonfmu3`
 2. Create a new class extending the `Fmi3Slave` class declared in the `pythonfmu3.fmi3slave` module (see below for an example).
 3. Create a `requirements.txt` file (to use _pip_ manager) and/or a `environment.yml` file (to use _conda_ manager) that defines your dependencies.
-4. Run `pythonfmu3 build -f myscript.py requirements.txt` to create the fmu including the dependencies file.
+4. Run `pythonfmu3 build myscript.py requirements.txt` to create the fmu including the dependencies file.
 
 And using `pythonfmu3 deploy`, end users will be able to update their local Python environment. The steps to achieve that:
 
 1. Install _pythonfmu_ package: `pip install pythonfmu3`
-2. Be sure to be in the Python environment to be updated. Then execute `pythonfmu3 deploy -f my.fmu`
+2. Be sure to be in the Python environment to be updated. Then execute `pythonfmu3 deploy my.fmu`
 
 ```
-usage: pythonfmu3 deploy [-h] -f FMU [-e ENVIRONMENT] [{pip,conda}]
+usage: pythonfmu3 deploy [-h] FMU [-e ENVIRONMENT] [{pip,conda}]
 
 Deploy a Python FMU. The command will look in the `resources` folder for one of the following files:
 `requirements.txt` or `environment.yml`. If you specify a environment file but no package manager, `conda` will be selected for `.yaml` and `.yml` otherwise `pip` will be used. The tool assume the Python environment in which the FMU should be executed is the current one.
@@ -89,17 +89,18 @@ optional arguments:
                         Requirements or environment file.
 ```
 
-### Cosimulation Example:
+## Cosimulation Example:
 
-#### Write the script
+### Write the script
 
 ```python
-
-from pythonfmu3 import Fmi3Causality, Fmi3Slave, Boolean, Int32, Float64, String
+from pythonfmu3.enums import Fmi3Causality
+from pythonfmu3.fmi3slave import Fmi3Slave
+from pythonfmu3.model_returns import Fmi3StepResult
+from pythonfmu3.variables import Boolean, Int32, Float64, String
 
 
 class PythonSlave(Fmi3Slave):
-
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -116,20 +117,19 @@ class PythonSlave(Fmi3Slave):
         self.register_variable(Float64("realOut", causality=Fmi3Causality.output))
         self.register_variable(Boolean("booleanVariable", causality=Fmi3Causality.local))
         self.register_variable(String("stringVariable", causality=Fmi3Causality.local))
-        
+
         # Note:
         # it is also possible to explicitly define getters and setters as lambdas in case the variable is not backed by a Python field.
         # self.register_variable(Float64("myReal", causality=Fmi3Causality.output, getter=lambda: self.realOut, setter=lambda v: set_real_out(v))
 
     def do_step(self, current_time, step_size):
-        return True
-
+        return Fmi3StepResult()
 ```
 
-#### Create the FMU
+### Create the FMU
 
 ```
-pythonfmu3 build -f pythonslave.py myproject
+pythonfmu3 build pythonslave.py myproject
 ```
 
 In this example a python class named `PythonSlave` that extends `Fmi3Slave` is declared in a file named `pythonslave.py`,
@@ -137,20 +137,21 @@ where `myproject` is an optional folder containing additional project files requ
 Project folders such as this will be recursively copied into the FMU. Multiple project files/folders may be added.
 
 
-### Model Exchange Example
+## Model Exchange Example
 
 To create a model exchange FMU you must inherit from `Fmi3SlaveBase` and one of (or both) mixin classes `ModelExchange` or `CoSimulation`.
 
-#### Write the script
+### Write the script
 
 ```python
-
-from pythonfmu3 import Fmi3Causality, Fmi3SlaveBase, Float64, ModelExchange
+from pythonfmu3.enums import Fmi3Causality
+from pythonfmu3.fmi3slave import Fmi3SlaveBase
+from pythonfmu3.modelexchange import ModelExchange
+from pythonfmu3.variables import Float64
 from typing import List
 
 
 class PythonSlaveMX(Fmi3SlaveBase, ModelExchange):
-
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -164,26 +165,65 @@ class PythonSlaveMX(Fmi3SlaveBase, ModelExchange):
         self.derx0 = 0.0
         self.derx1 = 0.0
 
-        self.register_variable(Float64("time", causality=Fmi3Causality.independent, variability=Fmi3Variability.continuous))
-        self.register_variable(Float64("x0", causality=Fmi3Causality.output, start=2, variability=Fmi3Variability.continuous, initial=Fmi3Initial.exact))
-        self.register_variable(Float64("x1", causality=Fmi3Causality.output, start=0, variability=Fmi3Variability.continuous, initial=Fmi3Initial.exact))
-        self.register_variable(Float64("derx0", causality=Fmi3Causality.local, variability=Fmi3Variability.continuous, derivative=1))
-        self.register_variable(Float64("derx1", causality=Fmi3Causality.local, variability=Fmi3Variability.continuous, derivative=2))
-        self.register_variable(Float64("mu", causality=Fmi3Causality.parameter, variability=Fmi3Variability.fixed))
-
+        self.register_variable(
+            Float64(
+                "time",
+                causality=Fmi3Causality.independent,
+                variability=Fmi3Variability.continuous,
+            )
+        )
+        self.register_variable(
+            Float64(
+                "x0",
+                causality=Fmi3Causality.output,
+                start=2,
+                variability=Fmi3Variability.continuous,
+                initial=Fmi3Initial.exact,
+            )
+        )
+        self.register_variable(
+            Float64(
+                "x1",
+                causality=Fmi3Causality.output,
+                start=0,
+                variability=Fmi3Variability.continuous,
+                initial=Fmi3Initial.exact,
+            )
+        )
+        self.register_variable(
+            Float64(
+                "derx0",
+                causality=Fmi3Causality.local,
+                variability=Fmi3Variability.continuous,
+                derivative=1,
+            )
+        )
+        self.register_variable(
+            Float64(
+                "derx1",
+                causality=Fmi3Causality.local,
+                variability=Fmi3Variability.continuous,
+                derivative=2,
+            )
+        )
+        self.register_variable(
+            Float64(
+                "mu",
+                causality=Fmi3Causality.parameter,
+                variability=Fmi3Variability.fixed,
+            )
+        )
 
     def get_continuous_state_derivatives(self) -> List[float]:
         self.derx0 = self.x1
         self.derx1 = self.mu * ((1 - self.x0**2) * self.x1) - self.x0
         return [self.derx0, self.derx1]
-        
-
 ```
 
 Note: There is a hard requirement that we have a `self.time` member in the derived class.
 
-#### Create the FMU
+### Create the FMU
 
 ```
-pythonfmu3 build -f pythonslaveMX.py
+pythonfmu3 build pythonslaveMX.py
 ```

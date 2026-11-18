@@ -1,9 +1,10 @@
-from pythonfmu3 import Fmi3Causality,  ModelExchange, Fmi3Variability, Fmi3SlaveBase, Fmi3Status, Float64, Fmi3Initial, Unit, Float64Type, Fmi3StepResult
+from pythonfmu3.variables import Float64
+from pythonfmu3.enums import Fmi3Causality, Fmi3Initial, Fmi3Variability
+from pythonfmu3.fmi3slave import Fmi3SlaveBase
+from pythonfmu3.modelexchange import ModelExchange
 
-from typing import List
 
 class Dahlquist(Fmi3SlaveBase, ModelExchange):
-
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -15,13 +16,38 @@ class Dahlquist(Fmi3SlaveBase, ModelExchange):
         self.x = 1.0
         self.derx = 0.0
 
-        self.register_variable(Float64("time", causality=Fmi3Causality.independent, variability=Fmi3Variability.continuous))
-        self.register_variable(Float64("x", causality=Fmi3Causality.output, start=1, variability=Fmi3Variability.continuous, initial=Fmi3Initial.exact))
-        self.register_variable(Float64("derx", causality=Fmi3Causality.local, variability=Fmi3Variability.continuous, derivative=1))
-        self.register_variable(Float64("k", causality=Fmi3Causality.parameter, variability=Fmi3Variability.fixed))
+        self.register_variable(
+            Float64(
+                "time",
+                causality=Fmi3Causality.independent,
+                variability=Fmi3Variability.continuous,
+            )
+        )
+        self.register_variable(
+            Float64(
+                "x",
+                causality=Fmi3Causality.output,
+                start=1,
+                variability=Fmi3Variability.continuous,
+                initial=Fmi3Initial.exact,
+            )
+        )
+        self.register_variable(
+            Float64(
+                "derx",
+                causality=Fmi3Causality.local,
+                variability=Fmi3Variability.continuous,
+                derivative=1,
+            )
+        )
+        self.register_variable(
+            Float64(
+                "k",
+                causality=Fmi3Causality.parameter,
+                variability=Fmi3Variability.fixed,
+            )
+        )
 
-
-    def get_continuous_state_derivatives(self) -> List[float]:
+    def get_continuous_state_derivatives(self) -> list[float]:
         self.derx = -self.k * self.x
         return [self.derx]
-       

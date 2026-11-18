@@ -1,11 +1,11 @@
 
 # binaries
-*.dll
-*.dll.manifest
-*.so
+#*.dll
+#*.dll.manifest
+#*.so
 
 # pythonfmu binaries folder
-/**/pythonfmu3/resources/binaries
+#/**/pythonfmu3/resources/binaries
 
 # CLion
 /**/cmake-build-debug
@@ -27,7 +27,7 @@ build/
 # test and examples artifacts
 /**/*_log.txt
 /**/*_result.mat
-/**/*.fmu
+#/**/*.fmu
 
 # Generated TensorFlow model
 /examples/tensorflow-model-export/stored-model/
