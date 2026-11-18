@@ -164,7 +164,7 @@ Once your Python script is ready, build the FMU:
 
 ```bash
 # Using the CLI
-pythonfmu3 build -f van_der_pol.py
+pythonfmu3 build van_der_pol.py
 ```
 
 ## Usage Example
@@ -360,5 +360,5 @@ Once your Python script is ready, build the FMU:
 
 ```bash
 # Using the CLI
-pythonfmu3 build -f bouncing_ball.py
+pythonfmu3 build bouncing_ball.py
 ```

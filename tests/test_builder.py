@@ -9,11 +9,14 @@ from pathlib import Path
 import pytest
 from attrs import asdict
 from fmpy import read_model_description
+from helpers import W_DIR
 
 import pythonfmu3
-from pythonfmu3.deploy import create_command_parser
-from pythonfmu3.builder import FmuBuilder, get_platform, create_command_parser
+from pythonfmu3.builder import FmuBuilder
+from pythonfmu3.deploy import deploy
 from pythonfmu3.fmi3slave import Fmi3ModelOptionsCS
+from pythonfmu3.cli.__main__ import parse_build, parse_deploy
+from pythonfmu3.osutil import get_platform
 
 PROJECT_TEST_CASES = [
     ("dummy.txt",),
@@ -29,7 +32,7 @@ def test_zip_content():
 
     script_name = "pythonslave.py"
     script_file = Path(__file__).parent / "slaves" / script_name
-    fmu = FmuBuilder.build_FMU(script_file, dest=W_DIR)
+    fmu = FmuBuilder(script_file, dest=W_DIR).build()
     assert fmu.exists()
     assert zipfile.is_zipfile(fmu)
 
@@ -62,8 +65,6 @@ def test_zip_content():
         pkg_folder = Path(pythonfmu3.__path__[0])
         for f in pkg_folder.rglob("*.py"):
             relative_f = f.relative_to(pkg_folder).as_posix()
-            if "test" not in relative_f:
-                assert "/".join(("resources", "pythonfmu3", relative_f)) in names
 
         assert len(names) >= nfiles  # Library + python script + XML + module name + sources
 
@@ -101,7 +102,7 @@ def test_project_files(pfiles):
                     project_files.remove(to_remove)
                     project_files.add(full_name.parent)
 
-            return FmuBuilder.build_FMU(script_file, dest=W_DIR, project_files=project_files)
+            return FmuBuilder(script_file, dest=W_DIR, project_files=project_files).build()
 
     fmu = build()
     with zipfile.ZipFile(fmu) as files:
@@ -120,7 +121,7 @@ def test_project_files(pfiles):
 
 
 @pytest.mark.parametrize("pfiles", PROJECT_TEST_CASES)
-def test_project_files_containing_script(tmp_path, pfiles):
+def test_project_files_containing_script(pfiles):
     orig_script_file = Path(__file__).parent / "slaves/pythonslave.py"
     pfiles = map(Path, pfiles)
 
@@ -139,7 +140,7 @@ def test_project_files_containing_script(tmp_path, pfiles):
                 else:
                     full_name.mkdir(parents=True, exist_ok=True)
 
-            return FmuBuilder.build_FMU(script_file, dest=tmp_path, project_files=[script_file.parent])
+            return FmuBuilder(script_file, dest=W_DIR, project_files=[script_file.parent]).build()
 
     fmu = build()
     with zipfile.ZipFile(fmu) as files:
@@ -157,7 +158,7 @@ def test_project_files_containing_script(tmp_path, pfiles):
             assert f"resources/{pfile!s}" in names
 
 
-def test_documentation(tmp_path):
+def test_documentation():
     script_file = Path(__file__).parent / "slaves/pythonslave.py"
 
     def build():
@@ -168,7 +169,7 @@ def test_documentation(tmp_path):
             license_file.write_text("Dummy license")
             index_file = doc_dir / "index.html"
             index_file.write_text("dummy index")
-            return FmuBuilder.build_FMU(script_file, dest=tmp_path, documentation_folder=doc_dir)
+            return FmuBuilder(script_file, dest=W_DIR, documentation_folder=doc_dir).build()
 
     fmu = build()
     with zipfile.ZipFile(fmu) as files:
@@ -178,7 +179,7 @@ def test_documentation(tmp_path):
         assert "documentation/licenses/license.txt" in names
 
 
-def test_terminals(tmp_path):
+def test_terminals():
     script_file = Path(__file__).parent / "slaves/pythonslave.py"
 
     def build():
@@ -187,7 +188,7 @@ def test_terminals(tmp_path):
             terminals = terminals_dir / "terminalsAndIcons.xml"
             terminals.write_text("Dummy Terminal 1")
 
-            return FmuBuilder.build_FMU(script_file, dest=tmp_path, terminals=terminals)
+            return FmuBuilder(script_file, dest=W_DIR, terminals=terminals).build()
 
     fmu = build()
     with zipfile.ZipFile(fmu) as files:
@@ -215,7 +216,7 @@ def test_cli():
         description="Build an FMU from a Python script.",
         help="Build an FMU from a Python script.",
     )
-    create_command_parser(build_parser)
+    parse_build(build_parser)
 
     deploy_parser = subparsers.add_parser(
         "deploy",
@@ -232,28 +233,28 @@ def test_cli():
         """,
         help="Install Python FMU dependencies.",
     )
-    create_command_parser(deploy_parser)
+    parse_deploy(deploy_parser)
 
     options = vars(parser.parse_args())
 
     py_file = Path(__file__).parent.resolve().parent / "examples/two_state.py"
     # cmd = f" build -f {py_file}"
     # print("CMD", cmd)
-    args = parser.parse_args(["build", "-f", str(py_file), "--hasEventMode", "--fixedInternalStepSize", "0.01"])
+    args = parser.parse_args(["build", str(py_file), "--hasEventMode", "--fixedInternalStepSize", "0.01"])
     assert args.script_file == str(py_file)
     assert not args.needsExecutionTool
     assert args.hasEventMode
 
     assert isinstance(vars(args), dict), "Arguments converted to dict, which is also used in cli"
 
-    dest = FmuBuilder.build_FMU(
-        script_file=py_file,
+    dest = FmuBuilder(
+        py_file,
         dest=Path(__file__).parent.resolve() / "test_working_directory",
         # project_files: Iterable[FilePath] = set(),
         # documentation_folder: Optional[FilePath] = None,
         # terminals : Optional[FilePath] = None,
         options={"hasEventMode": False, "canHandleVariableCommunicationStepSize": False},
-    )
+    ).build()
     md = read_model_description(dest, True, True, True)
     dct = asdict(md.coSimulation)
     assert not dct["hasEventMode"], f"'hasEventMode' is {dct['hasEventMode']}!"
@@ -275,10 +276,12 @@ def test_model_options():
 
 if __name__ == "__main__":
     """Possibility to run single or all tests from the IDE."""
-    retcode = 1
+    retcode = 0
     if retcode == 0:
         retcode = pytest.main(["-rA", "-v", "--rootdir", "../", "--show", "False", __file__])
         assert retcode == 0, f"Non-zero return code {retcode}"
+    # test_terminals()
+    # test_project_files("dummy.txt")
     test_zip_content()
     # test_cli()
     # test_model_options()

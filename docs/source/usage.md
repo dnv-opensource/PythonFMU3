@@ -229,7 +229,7 @@ def do_step(self, current_time, step_size):
 ### Create the FMU
 
 ```bash
-    pythonfmu3 build -f pythonslave.py myproject
+    pythonfmu3 build pythonslave.py myproject
 ```
 
 In this example a python class named `PythonSlave` that extends `Fmi3Slave` is declared in a file named `pythonslave.py`,

@@ -51,7 +51,7 @@ class {name}(Fmi3Slave):
     script_file.parent.mkdir(parents=True, exist_ok=True)
     script_file.write_text(slave_code)
 
-    fmu = FmuBuilder.build_FMU(script_file, dest=tmp_path)
+    fmu = FmuBuilder(script_file, dest=tmp_path).build()
     assert fmu.exists()
 
     logger = MagicMock()
@@ -116,7 +116,7 @@ class {name}(Fmi3Slave):
     script_file.parent.mkdir(parents=True, exist_ok=True)
     script_file.write_text(slave_code)
 
-    fmu = FmuBuilder.build_FMU(script_file, dest=tmp_path)
+    fmu = FmuBuilder(script_file, dest=tmp_path).build()
     assert fmu.exists()
 
     logger = MagicMock()

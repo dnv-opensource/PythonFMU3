@@ -41,6 +41,9 @@ All changes where implemented in the branch *eis*
 * Fixed a misunderstanding in update_discrete_states, where it is important to not use discreteStatesNeedsUpdate=True as way to signal that outputs are updated. Use it only to stay in event mode!
 * Made all imports into explicit imports and reduced src/pythonfmu3.__init__.py to nothing.
 * Removed _version.py and replaced pythonfmu3 version retrieval with retrieval from pyproject.toml as single source
+* Refactored builder.py, where ruff commented too complex functions. No comments from ruff check left.
+* Moved CLI to a separate directory src/pythonfmu3/cli/ CLI tests are working and the command line works. Documentation adapted.
+
 
 
 

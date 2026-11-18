@@ -74,7 +74,7 @@ tests = [
 ]
 
 [project.scripts]
-pythonfmu3 = "pythonfmu3.__main__:cli_main"
+pythonfmu3 = "pythonfmu3.cli.__main__:main"
 
 [project.urls]
 Homepage = "https://github.com/stephensmith25/PythonFMU3"

@@ -33,15 +33,9 @@ scipy
         with TemporaryDirectory() as tempd:
             requirements_file = Path(tempd) / requirements
             requirements_file.write_text(dummy_requirements)
-            fmu = FmuBuilder.build_FMU(
-                PYTHON_SLAVE,
-                dest=tmp_path,
-                project_files=[
-                    requirements_file,
-                ],
-            )
+            fmu = FmuBuilder(PYTHON_SLAVE, dest=tmp_path, project_files=[requirements_file]).build()
     else:
-        fmu = FmuBuilder.build_FMU(PYTHON_SLAVE, dest=tmp_path)
+        fmu = FmuBuilder(PYTHON_SLAVE, dest=tmp_path).build()
     assert fmu.exists()
 
     with patch("subprocess.run") as run:

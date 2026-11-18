@@ -21,7 +21,7 @@ def mapped(md):
 @pytest.mark.integration
 def test_integration_demo():
     script_file = Path(__file__).parent / "slaves/pythonslave.py"
-    fmu = FmuBuilder.build_FMU(script_file, dest=W_DIR, options={'needsExecutionTool':False})
+    fmu = FmuBuilder(script_file, dest=W_DIR, options={'needsExecutionTool':False}).build()
     assert fmu.exists()
     res = fmpy.simulate_fmu(str(fmu), stop_time=0.5)
 
@@ -31,14 +31,14 @@ def test_integration_demo():
 @pytest.mark.integration
 def test_integration_demo_MX():
     script_file = Path(__file__).parent / "slaves/pythonslaveMX.py"
-    fmu = FmuBuilder.build_FMU(script_file, dest=W_DIR, options={'needsExecutionTool':False})
+    fmu = FmuBuilder(script_file, dest=W_DIR, options={'needsExecutionTool':False}).build()
     assert fmu.exists()
     res = fmpy.simulate_fmu(str(fmu), stop_time=0.5)
 
 
 def test_integration_solve_MX():
     script_file = Path(__file__).parent / "slaves/pythonslaveMX.py"
-    fmu = FmuBuilder.build_FMU(script_file, dest=W_DIR, options={'needsExecutionTool':False})
+    fmu = FmuBuilder(script_file, dest=W_DIR, options={'needsExecutionTool':False}).build()
     assert fmu.exists()
 
     md = fmpy.read_model_description(str(fmu))
@@ -79,7 +79,7 @@ def test_integration_solve_MX():
 @pytest.mark.integration
 def test_integration_demo_CS_MX():
     script_file = Path(__file__).parent / "slaves/pythonslaveMXCS.py"
-    fmu = FmuBuilder.build_FMU(script_file, dest=W_DIR, options={'needsExecutionTool':False})
+    fmu = FmuBuilder(script_file, dest=W_DIR, options={'needsExecutionTool':False}).build()
     assert fmu.exists()
     res = fmpy.simulate_fmu(str(fmu), stop_time=0.5, fmi_type="ModelExchange")
 
@@ -92,7 +92,7 @@ def test_integration_demo_CS_MX():
 @pytest.mark.integration
 def test_integration_reset():
     script_file = Path(__file__).parent / "slaves/pythonslave.py"
-    fmu = FmuBuilder.build_FMU(script_file, dest=W_DIR, options={'needsExecutionTool':False})
+    fmu = FmuBuilder(script_file, dest=W_DIR, options={'needsExecutionTool':False}).build()
     assert fmu.exists()
 
     md = fmpy.read_model_description(str(fmu))
@@ -127,12 +127,7 @@ def test_integration_reset():
 @pytest.mark.integration
 def test_integration_get_state():
     script_file = Path(__file__).parent / "slaves/pythonslave.py"
-    fmu = FmuBuilder.build_FMU(
-        script_file,
-        dest=W_DIR,
-        options = {'needsExecutionTool':False,
-                   'canGetAndSetFMUstate':True}
-        )
+    fmu = FmuBuilder(script_file, dest=W_DIR, options= {'needsExecutionTool':False,'canGetAndSetFMUstate':True}).build()
     assert fmu.exists()
 
     md = fmpy.read_model_description(str(fmu))
@@ -176,12 +171,7 @@ def test_integration_get_state():
 def test_integration_get_serialize_state():
 
     script_file = Path(__file__).parent / "slaves/pythonslave.py"
-    fmu = FmuBuilder.build_FMU(
-        script_file,
-        dest=W_DIR,
-        options = {'canGetAndSetFMUstate':True,
-                   'canSerializeFMUstate':True}
-    )
+    fmu = FmuBuilder(script_file, dest=W_DIR, options={'canGetAndSetFMUstate':True, 'canSerializeFMUstate':True}).build()
     assert fmu.exists()
 
     md = fmpy.read_model_description(fmu)
@@ -233,7 +223,7 @@ def test_integration_get_serialize_state():
 @pytest.mark.integration
 def test_integration_get():
     script_file = Path(__file__).parent / "slaves/pythonslave.py"
-    fmu = FmuBuilder.build_FMU(script_file, dest=W_DIR, options={'needsExecutionTool':False})
+    fmu = FmuBuilder(script_file, dest=W_DIR, options={'needsExecutionTool':False}).build()
     assert fmu.exists()
 
     md = fmpy.read_model_description(fmu)
@@ -288,7 +278,7 @@ def test_integration_get():
 @pytest.mark.integration
 def test_integration_get_array():
     script_file = Path(__file__).parent / "slaves/pythonslave_arraytypes.py"
-    fmu = FmuBuilder.build_FMU(script_file, dest=W_DIR, options={'needsExecutionTool':False})
+    fmu = FmuBuilder(script_file, dest=W_DIR, options={'needsExecutionTool':False}).build()
     assert fmu.exists()
 
     md = fmpy.read_model_description(fmu)
@@ -353,12 +343,11 @@ def test_integration_get_array():
 def test_integration_read_from_file():
     script_file = Path(__file__).parent / "slaves/pythonslave_read_file.py"
     project_file = Path(__file__).parent / "data/hello.txt"
-    fmu = FmuBuilder.build_FMU(
-        script_file,
-        project_files=[project_file],
-        dest=W_DIR,
-        options={'needsExecutionTool':False},
-    )
+    fmu = FmuBuilder(script_file,
+                     dest=W_DIR,
+                     project_files = [project_file],
+                     options={'needsExecutionTool':False}
+                     ).build()
     assert fmu.exists()
 
     md = fmpy.read_model_description(fmu)
@@ -391,7 +380,7 @@ def test_integration_read_from_file():
 @pytest.mark.integration
 def test_integration_set():
     script_file = Path(__file__).parent / "slaves/pythonslave.py"
-    fmu = FmuBuilder.build_FMU(script_file, dest=W_DIR, options={'needsExecutionTool':False})
+    fmu = FmuBuilder(script_file, dest=W_DIR, options={'needsExecutionTool':False}).build()
     assert fmu.exists()
 
     md = fmpy.read_model_description(fmu)
@@ -446,7 +435,7 @@ def test_integration_set():
 @pytest.mark.integration
 def test_integration_set_array():
     script_file = Path(__file__).parent / "slaves/pythonslave_arraytypes.py"
-    fmu = FmuBuilder.build_FMU(script_file, dest=W_DIR, options={'needsExecutionTool':False})
+    fmu = FmuBuilder(script_file, dest=W_DIR, options={'needsExecutionTool':False}).build()
     assert fmu.exists()
 
     md = fmpy.read_model_description(fmu)
@@ -515,7 +504,7 @@ def test_integration_set_array():
 def test_simple_integration_fmpy():
 
     script_file = Path(__file__).parent / "slaves/pythonslave.py"
-    fmu = FmuBuilder.build_FMU(script_file, dest=W_DIR)
+    fmu = FmuBuilder(script_file, dest=W_DIR).build()
     assert fmu.exists()
     res = fmpy.simulate_fmu(str(fmu), stop_time=2.0)
 
@@ -528,12 +517,7 @@ def test_integration_has_local_dep():
     script_file = Path(__file__).parent / "slaves/slavewithdep.py"
     local_file = Path(__file__).parent / "slaves/localmodule.py"
 
-    fmu = FmuBuilder.build_FMU(
-        script_file,
-        dest=W_DIR,
-        project_files=[local_file],
-        options = {'needsExecutionTool':False},
-    )
+    fmu = FmuBuilder(script_file, dest=W_DIR, project_files=[local_file], options= {'needsExecutionTool':False}).build()
     assert fmu.exists()
 
     res = fmpy.simulate_fmu(str(fmu), stop_time=0.5)
@@ -545,7 +529,7 @@ def test_integration_has_local_dep():
 def test_integration_throw_py_error():
 
     script_file = Path(__file__).parent / "slaves/PythonSlaveWithException.py"
-    fmu = FmuBuilder.build_FMU(script_file, dest=W_DIR)
+    fmu = FmuBuilder(script_file, dest=W_DIR).build()
     assert fmu.exists()
 
     with pytest.raises(Exception):
@@ -559,13 +543,14 @@ if __name__ == "__main__":
         assert retcode == 0, f"Non-zero return code {retcode}"
 
     # test_integration_demo()
-    test_integration_solve_MX()
+    # test_integration_solve_MX()
     # test_integration_demo_CS_MX()
     # test_integration_get_serialize_state()
     # test_integration_get_array()
     # test_integration_read_from_file()
     # test_integration_set_array()
     # test_integration_has_local_dep()
+    test_simple_integration_fmpy()
 
 
         

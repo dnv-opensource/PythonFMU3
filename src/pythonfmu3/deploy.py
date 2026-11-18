@@ -97,24 +97,3 @@ def deploy(
                 check=True,
             )
 
-
-def create_command_parser(parser: argparse.ArgumentParser):
-
-    parser.add_argument("-f", "--file", dest="fmu", help="Path to the Python FMU.", required=True)
-
-    parser.add_argument(
-        "-e",
-        "--env",
-        dest="environment",
-        help="Requirements or environment file.",
-        default=None,
-    )
-
-    parser.add_argument(
-        choices=["pip", "conda"],
-        dest="package_manager",
-        nargs="?",
-        help="Python packages manager",
-    )
-
-    parser.set_defaults(execute=deploy)

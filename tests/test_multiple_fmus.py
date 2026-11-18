@@ -72,13 +72,13 @@ class Slave2(Fmi3Slave):
     script1_file.parent.mkdir(parents=True, exist_ok=True)
     script1_file.write_text(slave1_code)
 
-    fmu1 = FmuBuilder.build_FMU(script1_file, dest=W_DIR, options={'needsExecutionTool':False})
+    fmu1 = FmuBuilder(script1_file, dest=W_DIR, options={'needsExecutionTool':False}).build()
     assert fmu1.exists()
 
     script2_file = W_DIR / "orig" / "slave2.py"
     script2_file.write_text(slave2_code)
 
-    fmu2 = FmuBuilder.build_FMU(script2_file, dest=W_DIR, options={'needsExecutionTool':False})
+    fmu2 = FmuBuilder(script2_file, dest=W_DIR, options={'needsExecutionTool':False}).build()
     assert fmu2.exists()
 
     md1 = fmpy.read_model_description(fmu1)

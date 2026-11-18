@@ -72,12 +72,6 @@ if __name__ == "__main__":
     from pythonfmu3.builder import FmuBuilder
     from fmpy import read_model_description
 
-    dest = FmuBuilder.build_FMU(
-        script_file = Path(__file__),
-        dest = Path(__file__).parent.resolve(),
-        #project_files: Iterable[FilePath] = set(),
-        #documentation_folder: Optional[FilePath] = None,
-        #terminals : Optional[FilePath] = None,
-    )
+    dest = FmuBuilder( Path(__file__), dest = Path(__file__).parent.resolve()).build()
     read_model_description(dest, True, True, True)
     print(f"Generated {dest}. Validated modelDescription.")
